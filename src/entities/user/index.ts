@@ -1,1 +1,1 @@
-export type { LoginRequest, RegisterRequest, User, UserRole, UserSession, UserStatus } from './model/userTypes'
+export type { LoginRequest, RegisterRequest, TokenPairResponse, User, UserRole, UserSession, UserStatus } from './model/userTypes'

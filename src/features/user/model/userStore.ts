@@ -2,13 +2,15 @@ import { create } from 'zustand'
 
 import type { User } from '@/entities/user'
 
-const TOKEN_KEY = 'raio.accessToken'
+const ACCESS_TOKEN_KEY = 'raio.accessToken'
+const REFRESH_TOKEN_KEY = 'raio.refreshToken'
 const USER_KEY = 'raio.user'
 
 interface UserState {
   user: User | null
   token: string | null
-  setSession: (user: User, token: string) => void
+  refreshToken: string | null
+  setSession: (user: User, accessToken: string, refreshToken: string) => void
   logout: () => void
 }
 
@@ -23,15 +25,18 @@ function readUser(): User | null {
 
 export const useUserStore = create<UserState>((set) => ({
   user: readUser(),
-  token: localStorage.getItem(TOKEN_KEY),
-  setSession: (user, token) => {
+  token: localStorage.getItem(ACCESS_TOKEN_KEY),
+  refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY),
+  setSession: (user, accessToken, refreshToken) => {
     localStorage.setItem(USER_KEY, JSON.stringify(user))
-    localStorage.setItem(TOKEN_KEY, token)
-    set({ user, token })
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    set({ user, token: accessToken, refreshToken })
   },
   logout: () => {
     localStorage.removeItem(USER_KEY)
-    localStorage.removeItem(TOKEN_KEY)
-    set({ user: null, token: null })
+    localStorage.removeItem(ACCESS_TOKEN_KEY)
+    localStorage.removeItem(REFRESH_TOKEN_KEY)
+    set({ user: null, token: null, refreshToken: null })
   },
 }))

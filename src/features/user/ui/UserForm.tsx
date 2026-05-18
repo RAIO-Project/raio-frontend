@@ -67,7 +67,7 @@ export function UserForm({ mode }: UserFormProps) {
             phoneNumber: form.phoneNumber.trim(),
           })
         : await loginUser({ email: form.email.trim(), password: form.password })
-      setSession(result.user, result.token)
+      setSession(result.user, result.accessToken, result.refreshToken)
       showToast(isRegister ? '회원가입이 완료되었습니다.' : '로그인되었습니다.', 'success')
       navigate('/')
     } catch {
