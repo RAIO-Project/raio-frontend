@@ -1,8 +1,8 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { HomePage } from '@/pages/home'
-import { StreamDetailPage } from '@/pages/stream-detail'
-import { UserPage } from '@/pages/user'
+import { HomePage } from "@/pages/home";
+import { StreamDetailPage } from "@/pages/stream/stream-detail";
+import { UserPage } from "@/pages/user";
 
 export function RouterProvider() {
   return (
@@ -15,5 +15,5 @@ export function RouterProvider() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }
