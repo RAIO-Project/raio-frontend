@@ -4,7 +4,7 @@ import { findStreamById, useStreamStore } from "@/entities/stream";
 import { ToastHost } from "@/shared";
 import { AppHeader } from "@/widgets/layout";
 import { LiveRoom } from "@/widgets/stream/live-room";
-import { PointChargeModal } from "@/widgets/point-charge";
+import { PointChargeModal } from "@/widgets/payment/point-charge";
 
 export function StreamDetailPage() {
   const { streamId } = useParams();

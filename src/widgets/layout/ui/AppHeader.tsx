@@ -1,28 +1,31 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate } from "react-router-dom";
 
-import { useStreamStore } from '@/entities/stream'
-import { useUserStore } from '@/features/user'
-import { formatPoint } from '@/shared'
-import { usePointStore } from '@/widgets/point-charge'
+import { useStreamStore } from "@/entities/stream";
+import { useUserStore } from "@/features/user";
+import { formatPoint } from "@/shared";
+import { usePointStore } from "@/widgets/payment/point-charge";
 
 export function AppHeader() {
-  const navigate = useNavigate()
-  const user = useUserStore((state) => state.user)
-  const token = useUserStore((state) => state.token)
-  const logout = useUserStore((state) => state.logout)
-  const balance = usePointStore((state) => state.balance)
-  const openModal = usePointStore((state) => state.openModal)
-  const query = useStreamStore((state) => state.query)
-  const setQuery = useStreamStore((state) => state.setQuery)
+  const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
+  const token = useUserStore((state) => state.token);
+  const logout = useUserStore((state) => state.logout);
+  const balance = usePointStore((state) => state.balance);
+  const openModal = usePointStore((state) => state.openModal);
+  const query = useStreamStore((state) => state.query);
+  const setQuery = useStreamStore((state) => state.setQuery);
 
   const signOut = () => {
-    logout()
-    navigate('/login')
-  }
+    logout();
+    navigate("/login");
+  };
 
   return (
     <header className="flex shrink-0 items-center gap-3 border-b border-border bg-bg-2 px-4 py-3">
-      <button onClick={() => navigate('/')} className="text-xl font-black tracking-tighter">
+      <button
+        onClick={() => navigate("/")}
+        className="text-xl font-black tracking-tighter"
+      >
         R<span className="text-accent">AI</span>O
       </button>
       <input
@@ -37,12 +40,15 @@ export function AppHeader() {
       <div className="ml-auto flex items-center gap-2">
         {token ? (
           <>
-            <button onClick={openModal} className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent">
+            <button
+              onClick={openModal}
+              className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent"
+            >
               {formatPoint(balance)} ＋
             </button>
             <div className="group relative">
               <button className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-xs font-black text-black">
-                {user?.nickname?.[0] || '나'}
+                {user?.nickname?.[0] || "나"}
               </button>
               <div className="absolute right-0 top-11 z-50 hidden w-44 rounded-2xl border border-border bg-bg-3 p-2 shadow-2xl group-hover:block">
                 <p className="px-3 py-2 text-[11px] text-white/40">
@@ -50,18 +56,24 @@ export function AppHeader() {
                   <br />
                   {user?.email}
                 </p>
-                <button onClick={signOut} className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white">
+                <button
+                  onClick={signOut}
+                  className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
+                >
                   로그아웃
                 </button>
               </div>
             </div>
           </>
         ) : (
-          <button onClick={() => navigate('/login')} className="rounded-xl bg-accent px-4 py-2 text-xs font-black text-black">
+          <button
+            onClick={() => navigate("/login")}
+            className="rounded-xl bg-accent px-4 py-2 text-xs font-black text-black"
+          >
             로그인
           </button>
         )}
       </div>
     </header>
-  )
+  );
 }
