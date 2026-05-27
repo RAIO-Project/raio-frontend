@@ -1,7 +1,7 @@
 import { CategoryBar } from "@/features/stream/stream-filter";
 import { ToastHost } from "@/shared";
 import { AppHeader } from "@/widgets/layout";
-import { PointChargeModal } from "@/widgets/payment/point-charge";
+import { AuthGateModal, PointChargeModal } from "@/widgets/payment/point-charge";
 import { StreamFeed } from "@/widgets/stream/stream-feed";
 
 export function HomePage() {
@@ -10,6 +10,7 @@ export function HomePage() {
       <AppHeader />
       <CategoryBar />
       <StreamFeed />
+      <AuthGateModal />
       <PointChargeModal />
       <ToastHost />
     </div>

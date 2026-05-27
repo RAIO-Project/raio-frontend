@@ -10,6 +10,9 @@ type UserFormMode = 'login' | 'register'
 
 interface UserFormProps {
   mode: UserFormMode
+  compact?: boolean
+  onSuccess?: () => void
+  onModeChange?: (mode: UserFormMode) => void
 }
 
 interface UserFormState {
@@ -28,7 +31,7 @@ const initialForm: UserFormState = {
   phoneNumber: '',
 }
 
-export function UserForm({ mode }: UserFormProps) {
+export function UserForm({ mode, compact = false, onSuccess, onModeChange }: UserFormProps) {
   const isRegister = mode === 'register'
   const navigate = useNavigate()
   const setSession = useUserStore((state) => state.setSession)
@@ -69,7 +72,8 @@ export function UserForm({ mode }: UserFormProps) {
         : await loginUser({ email: form.email.trim(), password: form.password })
       setSession(result.user, result.accessToken, result.refreshToken)
       showToast(isRegister ? '회원가입이 완료되었습니다.' : '로그인되었습니다.', 'success')
-      navigate('/')
+      if (onSuccess) onSuccess()
+      else navigate('/')
     } catch {
       setError(isRegister ? '이미 가입된 이메일이거나 입력값이 올바르지 않습니다.' : '이메일 또는 비밀번호가 올바르지 않습니다.')
     } finally {
@@ -78,7 +82,7 @@ export function UserForm({ mode }: UserFormProps) {
   }
 
   return (
-    <div className="w-full max-w-md rounded-[2rem] border border-border bg-bg-2/90 p-7 shadow-2xl backdrop-blur">
+    <div className={`w-full max-w-md rounded-[2rem] border border-border bg-bg-2/90 shadow-2xl backdrop-blur ${compact ? 'p-6' : 'p-7'}`}>
       <div className="mb-7 text-center">
         <p className="text-xs font-black uppercase tracking-[0.35em] text-accent">RAIO LIVE</p>
         <h1 className="mt-2 text-3xl font-black tracking-tight">{isRegister ? '방송을 시작할 계정 만들기' : '라이브에 입장하기'}</h1>
@@ -101,9 +105,19 @@ export function UserForm({ mode }: UserFormProps) {
 
       <p className="mt-5 text-center text-xs text-white/35">
         {isRegister ? '이미 계정이 있으신가요?' : '계정이 없으신가요?'}{' '}
-        <Link className="font-black text-accent hover:underline" to={isRegister ? '/login' : '/register'}>
-          {isRegister ? '로그인' : '회원가입'}
-        </Link>
+        {onModeChange ? (
+          <button
+            type="button"
+            onClick={() => onModeChange(isRegister ? 'login' : 'register')}
+            className="font-black text-accent hover:underline"
+          >
+            {isRegister ? '로그인' : '회원가입'}
+          </button>
+        ) : (
+          <Link className="font-black text-accent hover:underline" to={isRegister ? '/login' : '/register'}>
+            {isRegister ? '로그인' : '회원가입'}
+          </Link>
+        )}
       </p>
     </div>
   )

@@ -11,9 +11,15 @@ export function AppHeader() {
   const token = useUserStore((state) => state.token);
   const logout = useUserStore((state) => state.logout);
   const balance = usePointStore((state) => state.balance);
-  const openModal = usePointStore((state) => state.openModal);
+  const openCharge = usePointStore((state) => state.openCharge);
+  const openAuth = usePointStore((state) => state.openAuth);
   const query = useStreamStore((state) => state.query);
   const setQuery = useStreamStore((state) => state.setQuery);
+
+  const openPointCharge = () => {
+    if (token) openCharge();
+    else openAuth();
+  };
 
   const signOut = () => {
     logout();
@@ -38,33 +44,35 @@ export function AppHeader() {
         방송 만들기
       </button>
       <div className="ml-auto flex items-center gap-2">
+        <button
+          onClick={openPointCharge}
+          className="flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent transition hover:border-accent/40 hover:bg-accent/15"
+          aria-label="포인트 충전"
+        >
+          <span className="text-base leading-none">◎</span>
+          {token ? formatPoint(balance) : "포인트 충전"}
+          <span>＋</span>
+        </button>
+
         {token ? (
-          <>
-            <button
-              onClick={openModal}
-              className="rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-xs font-black text-accent"
-            >
-              {formatPoint(balance)} ＋
+          <div className="group relative">
+            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-xs font-black text-black">
+              {user?.nickname?.[0] || "나"}
             </button>
-            <div className="group relative">
-              <button className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-xs font-black text-black">
-                {user?.nickname?.[0] || "나"}
+            <div className="absolute right-0 top-11 z-50 hidden w-44 rounded-2xl border border-border bg-bg-3 p-2 shadow-2xl group-hover:block">
+              <p className="px-3 py-2 text-[11px] text-white/40">
+                {user?.nickname}
+                <br />
+                {user?.email}
+              </p>
+              <button
+                onClick={signOut}
+                className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
+              >
+                로그아웃
               </button>
-              <div className="absolute right-0 top-11 z-50 hidden w-44 rounded-2xl border border-border bg-bg-3 p-2 shadow-2xl group-hover:block">
-                <p className="px-3 py-2 text-[11px] text-white/40">
-                  {user?.nickname}
-                  <br />
-                  {user?.email}
-                </p>
-                <button
-                  onClick={signOut}
-                  className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
-                >
-                  로그아웃
-                </button>
-              </div>
             </div>
-          </>
+          </div>
         ) : (
           <button
             onClick={() => navigate("/login")}
