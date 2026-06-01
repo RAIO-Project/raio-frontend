@@ -1,19 +1,15 @@
 import type { ChangeEvent } from 'react'
 import { useRef, useState } from 'react'
-
 import type { Stream } from '@/entities/stream'
 import { formatCompactNumber } from '@/shared'
-
 interface VideoStageProps {
   stream: Stream
 }
-
 export function VideoStage({ stream }: VideoStageProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const [hasFile, setHasFile] = useState(false)
   const [playing, setPlaying] = useState(false)
-
   const loadVideo = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file || !videoRef.current) return
@@ -22,7 +18,6 @@ export function VideoStage({ stream }: VideoStageProps) {
     setHasFile(true)
     setPlaying(true)
   }
-
   const togglePlay = () => {
     const video = videoRef.current
     if (!video?.src) return
@@ -34,7 +29,6 @@ export function VideoStage({ stream }: VideoStageProps) {
       setPlaying(false)
     }
   }
-
   const toggleFullScreen = () => {
     if (document.fullscreenElement) {
       void document.exitFullscreen()
@@ -42,13 +36,12 @@ export function VideoStage({ stream }: VideoStageProps) {
     }
     void videoRef.current?.parentElement?.requestFullscreen()
   }
-
   return (
     <section className="relative aspect-video overflow-hidden rounded-[2rem] border border-border bg-black">
       {!hasFile && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-bg-3 to-bg-5 text-center">
-          <div className="text-7xl opacity-40">{stream.emoji}</div>
-          <h2 className="mt-3 text-xl font-black">{stream.streamerName} LIVE</h2>
+          <div className="text-7xl opacity-40">📺</div>
+          <h2 className="mt-3 text-xl font-black">{stream.streamerId} LIVE</h2>
           <p className="mt-1 text-xs text-white/40">방송 송출 API 연결 전, 로컬 영상으로 플레이어를 확인할 수 있습니다.</p>
           <button onClick={() => inputRef.current?.click()} className="mt-4 rounded-xl bg-accent px-4 py-2 text-xs font-black text-black">
             테스트 영상 선택

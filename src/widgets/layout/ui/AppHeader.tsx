@@ -15,6 +15,7 @@ export function AppHeader() {
   const openAuth = usePointStore((state) => state.openAuth);
   const query = useStreamStore((state) => state.query);
   const setQuery = useStreamStore((state) => state.setQuery);
+  const loadStreams = useStreamStore((state) => state.loadStreams);
 
   const openPointCharge = () => {
     if (token) openCharge();
@@ -37,12 +38,17 @@ export function AppHeader() {
       <input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") void loadStreams();
+        }}
         className="hidden max-w-sm flex-1 rounded-xl border border-border bg-bg-3 px-3 py-2 text-xs outline-none placeholder:text-white/25 focus:border-accent/40 sm:block"
         placeholder="스트리머 · 방송 · 태그 검색"
       />
-      <button className="hidden rounded-xl border border-border px-3 py-2 text-xs font-black text-white/50 hover:text-white md:block">
-        방송 만들기
-      </button>
+      {token && (
+        <button className="hidden rounded-xl border border-border px-3 py-2 text-xs font-black text-white/50 hover:text-white md:block">
+          방송 만들기
+        </button>
+      )}
       <div className="ml-auto flex items-center gap-2">
         <button
           onClick={openPointCharge}
