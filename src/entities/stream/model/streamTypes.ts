@@ -83,3 +83,30 @@ export interface Stream {
   viewerCount: number
   status: StreamStatusCode
 }
+
+// GET /streams/{id} 단건 상세 (StreamDetail)
+export interface StreamDetailDto {
+  id: string
+  streamerId: string
+  title: string
+  category: StreamCategoryCode | null
+  status: StreamStatusCode
+  startedAt: string | null
+}
+
+// POST /streams 요청 (OpenStreamRequest)
+export interface CreateStreamRequest {
+  streamerId: string
+  title: string
+  category: StreamCategoryCode
+}
+
+// 프론트 상세 모델
+export interface StreamDetail {
+  id: string
+  streamerId: string
+  title: string
+  category: Exclude<StreamCategoryLabel, '전체'> | null
+  status: StreamStatusCode
+  startedAt: string | null
+}

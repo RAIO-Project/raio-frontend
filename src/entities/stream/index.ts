@@ -6,10 +6,17 @@ export {
 } from './model/streamTypes'
 export type {
   Stream,
+  StreamDetail,
   StreamCategoryLabel,
   StreamCategoryCode,
   StreamStatusCode,
   StreamSort,
 } from './model/streamTypes'
-export { fetchStreamsLatest, fetchStreamsByViewer } from './api/streamApi'
+export {
+  fetchStreamsLatest,
+  fetchStreamsByViewer,
+  fetchStreamDetail,
+  createStream,
+  startStream,
+} from './api/streamApi'
 export { StreamCard } from './ui/StreamCard'

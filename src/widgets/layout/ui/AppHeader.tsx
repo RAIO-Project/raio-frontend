@@ -45,7 +45,10 @@ export function AppHeader() {
         placeholder="스트리머 · 방송 · 태그 검색"
       />
       {token && (
-        <button className="hidden rounded-xl border border-border px-3 py-2 text-xs font-black text-white/50 hover:text-white md:block">
+        <button
+          onClick={() => navigate("/stream/create")}
+          className="hidden rounded-xl border border-border px-3 py-2 text-xs font-black text-white/50 hover:text-white md:block"
+        >
           방송 만들기
         </button>
       )}

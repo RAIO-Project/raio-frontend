@@ -1,22 +1,30 @@
 import { useState } from 'react'
 
-import type { Stream } from '@/entities/stream'
 import { ChatPanel, useChat } from '@/features/chat'
 import { DonationBox } from '@/features/donation'
 import { VideoStage } from './VideoStage'
 
+interface LiveRoomStream {
+  id: string
+  streamerId: string
+  title: string
+  category: string | null
+  viewerCount?: number
+  status: string
+}
+
 interface LiveRoomProps {
-  stream: Stream
+  stream: LiveRoomStream
 }
 
 export function LiveRoom({ stream }: LiveRoomProps) {
   const [followed, setFollowed] = useState(false)
-  const chat = useChat(Number(stream.id)) //TODO: 수정 필요
+  const chat = useChat(stream.id)
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto p-4">
-        <VideoStage stream={stream} />
+        <VideoStage stream={{ ...stream, viewerCount: stream.viewerCount ?? 0 }} />
         <section className="mt-4 rounded-[2rem] border border-border bg-bg-2 p-5">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-cyan-600 text-lg font-black text-black">

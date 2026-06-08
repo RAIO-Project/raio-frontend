@@ -56,3 +56,49 @@ export async function fetchStreamsByViewer(params: {
   })
   return data.content.map((item) => toStream(item.stream, item.currentViewerCount))
 }
+
+// ----- 방송 생성/시작/상세 (라이프사이클) -----
+import {
+  type CreateStreamRequest,
+  type StreamDetail,
+  type StreamDetailDto,
+} from '../model/streamTypes'
+
+function toStreamDetail(dto: StreamDetailDto): StreamDetail {
+  return {
+    id: dto.id,
+    streamerId: dto.streamerId,
+    title: dto.title,
+    category: toCategoryLabel(dto.category),
+    status: dto.status,
+    startedAt: dto.startedAt,
+  }
+}
+
+/** 방송 개설 POST /streams (READY 생성). category 는 한글 라벨로 받아 enum 코드로 변환. */
+export async function createStream(params: {
+  streamerId: string
+  title: string
+  category: Exclude<StreamCategoryLabel, '전체'>
+}): Promise<StreamDetail> {
+  const code = toCategoryCode(params.category)
+  const payload: CreateStreamRequest = {
+    streamerId: params.streamerId,
+    title: params.title,
+    category: code!, // '전체' 제외 라벨이므로 code 항상 존재
+  }
+  const { data } = await httpClient.post<StreamDetailDto>('/streams', payload)
+  return toStreamDetail(data)
+}
+
+/** 방송 시작 POST /streams/{id}/start (READY -> LIVE). */
+export async function startStream(streamId: string): Promise<StreamDetail> {
+  const { data } = await httpClient.post<StreamDetailDto>(`/streams/${streamId}/start`, {})
+  return toStreamDetail(data)
+}
+
+/** 단건 상세 GET /streams/{id}. */
+export async function fetchStreamDetail(streamId: string): Promise<StreamDetail> {
+  const { data } = await httpClient.get<StreamDetailDto>(`/streams/${streamId}`)
+  return toStreamDetail(data)
+}

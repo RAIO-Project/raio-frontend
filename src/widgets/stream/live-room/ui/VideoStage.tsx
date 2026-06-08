@@ -1,10 +1,15 @@
 import type { ChangeEvent } from 'react'
 import { useRef, useState } from 'react'
-import type { Stream } from '@/entities/stream'
 import { formatCompactNumber } from '@/shared'
+
+// VideoStage 가 실제 사용하는 필드만 받음 (Stream/StreamDetail 모두 호환)
 interface VideoStageProps {
-  stream: Stream
+  stream: {
+    streamerId: string
+    viewerCount: number
+  }
 }
+
 export function VideoStage({ stream }: VideoStageProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)

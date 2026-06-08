@@ -1,19 +1,39 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
+import { fetchStreamDetail, type StreamDetail } from '@/entities/stream'
 import { ToastHost } from '@/shared'
 import { AppHeader } from '@/widgets/layout'
 import { AuthGateModal, PointChargeModal } from '@/widgets/payment/point-charge'
+import { LiveRoom } from '@/widgets/stream/live-room'
 
-/**
- * TODO: 단건 상세 연동 (다음 작업)
- *  - GET /streams/{streamId} (StreamReadByIdUseCase) 연동
- *  - LiveRoom 을 StreamDetail 응답 기준으로 재구성 (mock 전용 필드 streamerName/followers/tags/notice 정리)
- *  - useChat(streamId) 의 id 타입 number -> string 정합성 처리
- *  현재는 목록 연동만 완료된 상태라 상세는 플레이스홀더로 둔다.
- */
 export function StreamDetailPage() {
   const { streamId } = useParams()
   const navigate = useNavigate()
+
+  const [stream, setStream] = useState<StreamDetail | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!streamId) return
+    let alive = true
+    setLoading(true)
+    setError(null)
+    fetchStreamDetail(streamId)
+      .then((data) => {
+        if (alive) setStream(data)
+      })
+      .catch(() => {
+        if (alive) setError('방송 정보를 불러오지 못했습니다.')
+      })
+      .finally(() => {
+        if (alive) setLoading(false)
+      })
+    return () => {
+      alive = false
+    }
+  }, [streamId])
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-bg">
@@ -23,11 +43,17 @@ export function StreamDetailPage() {
           ← 홈
         </button>
         <span className="mx-2">/</span>
-        <span className="text-white/70">방송 {streamId}</span>
+        <span className="text-white/70">{stream?.title ?? `방송 ${streamId}`}</span>
       </div>
-      <div className="flex flex-1 items-center justify-center text-sm text-white/40">
-        상세 페이지 준비 중입니다.
-      </div>
+
+      {loading && (
+        <div className="flex flex-1 items-center justify-center text-sm text-white/40">불러오는 중…</div>
+      )}
+      {error && !loading && (
+        <div className="flex flex-1 items-center justify-center text-sm text-red-400">{error}</div>
+      )}
+      {stream && !loading && !error && <LiveRoom stream={stream} />}
+
       <AuthGateModal />
       <PointChargeModal />
       <ToastHost />
