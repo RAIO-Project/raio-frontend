@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useStreamStore } from "@/entities/stream";
 import { useUserStore } from "@/features/user";
 import { formatPoint } from "@/shared";
-import { usePointStore } from "@/widgets/payment/point-charge";
+import { usePointStore } from "@/features/payment/charge-point";
 
 export function AppHeader() {
   const navigate = useNavigate();

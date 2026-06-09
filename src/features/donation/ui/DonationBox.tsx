@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { useUserStore } from "@/features/user";
-import { usePointStore } from "@/widgets/payment/point-charge";
+import { usePointStore } from "@/features/payment/charge-point";
 import { formatPoint, showToast } from "@/shared";
 
 const DONATION_AMOUNTS = [100, 500, 1000, 5000];

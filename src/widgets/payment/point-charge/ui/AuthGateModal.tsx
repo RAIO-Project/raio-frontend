@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 import { UserForm } from '@/features/user'
-import { usePointStore } from '@/widgets/payment/point-charge'
+import { usePointStore } from '@/features/payment/charge-point'
 
 type AuthMode = 'login' | 'register'
 

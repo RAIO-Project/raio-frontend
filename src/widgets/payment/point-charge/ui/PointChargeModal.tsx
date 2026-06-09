@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { formatPoint, showToast } from '@/shared'
-import { usePointStore } from '@/widgets/payment/point-charge'
+import { usePointStore } from '@/features/payment/charge-point'
 
 interface ChargeOption {
   amount: number

@@ -4,6 +4,7 @@ import { HomePage } from "@/pages/home";
 import { StreamStudioPage } from "@/pages/stream/stream-studio";
 import { StreamDetailPage } from "@/pages/stream/stream-detail";
 import { UserPage } from "@/pages/user";
+import { UserMyPage } from "@/pages/user/my-page";
 
 export function RouterProvider() {
   return (
@@ -14,7 +15,7 @@ export function RouterProvider() {
         <Route path="/register" element={<UserPage mode="register" />} />
         <Route path="/stream/create" element={<StreamStudioPage />} />
         <Route path="/stream/:streamId" element={<StreamDetailPage />} />
-        <Route path="/my-page" element={<UserPage mode="register" />} />
+        <Route path="/my-page" element={<UserMyPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
