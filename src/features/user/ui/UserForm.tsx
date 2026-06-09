@@ -2,6 +2,7 @@ import type { ChangeEvent, FormEvent, InputHTMLAttributes } from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
+import { usePaymentStore } from '@/entities/payment'
 import { loginUser, registerUser } from '@/features/user'
 import { useUserStore } from '@/features/user'
 import { showToast } from '@/shared'
@@ -35,6 +36,7 @@ export function UserForm({ mode, compact = false, onSuccess, onModeChange }: Use
   const isRegister = mode === 'register'
   const navigate = useNavigate()
   const setSession = useUserStore((state) => state.setSession)
+  const loadWallet = usePaymentStore((state) => state.loadWallet)
   const [form, setForm] = useState<UserFormState>(initialForm)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,43 +64,103 @@ export function UserForm({ mode, compact = false, onSuccess, onModeChange }: Use
     setError('')
     setLoading(true)
     try {
-      const result = isRegister
-        ? await registerUser({
-            email: form.email.trim(),
-            password: form.password,
-            nickname: form.nickname.trim(),
-            phoneNumber: form.phoneNumber.trim(),
-          })
-        : await loginUser({ email: form.email.trim(), password: form.password })
-      setSession(result.user, result.accessToken, result.refreshToken)
+      if (isRegister) {
+        const session = await registerUser({
+          email: form.email.trim(),
+          password: form.password,
+          nickname: form.nickname.trim(),
+          phoneNumber: form.phoneNumber.trim(),
+        })
+        setSession(session.user, session.accessToken, session.refreshToken)
+        await loadWallet(session.user.id)
+      } else {
+        const session = await loginUser({ email: form.email.trim(), password: form.password })
+        setSession(session.user, session.accessToken, session.refreshToken)
+        await loadWallet(session.user.id)
+      }
+
       showToast(isRegister ? '회원가입이 완료되었습니다.' : '로그인되었습니다.', 'success')
       if (onSuccess) onSuccess()
       else navigate('/')
     } catch {
-      setError(isRegister ? '이미 가입된 이메일이거나 입력값이 올바르지 않습니다.' : '이메일 또는 비밀번호가 올바르지 않습니다.')
+      setError(
+        isRegister
+          ? '이미 가입된 이메일이거나 입력값이 올바르지 않습니다.'
+          : '이메일 또는 비밀번호가 올바르지 않습니다.',
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className={`w-full max-w-md rounded-[2rem] border border-border bg-bg-2/90 shadow-2xl backdrop-blur ${compact ? 'p-6' : 'p-7'}`}>
+    <div
+      className={`w-full max-w-md rounded-[2rem] border border-border bg-bg-2/90 shadow-2xl backdrop-blur ${compact ? 'p-6' : 'p-7'}`}
+    >
       <div className="mb-7 text-center">
         <p className="text-xs font-black uppercase tracking-[0.35em] text-accent">RAIO LIVE</p>
-        <h1 className="mt-2 text-3xl font-black tracking-tight">{isRegister ? '방송을 시작할 계정 만들기' : '라이브에 입장하기'}</h1>
+        <h1 className="mt-2 text-3xl font-black tracking-tight">
+          {isRegister ? '방송을 시작할 계정 만들기' : '라이브에 입장하기'}
+        </h1>
         <p className="mt-2 text-xs text-white/40">채팅, 팔로우, 후원까지 하나의 계정으로 이용합니다.</p>
       </div>
 
-      {error && <div className="mb-4 rounded-xl border border-accent-2/30 bg-accent-2/10 px-4 py-3 text-xs font-bold text-accent-2">{error}</div>}
+      {error && (
+        <div className="mb-4 rounded-xl border border-accent-2/30 bg-accent-2/10 px-4 py-3 text-xs font-bold text-accent-2">
+          {error}
+        </div>
+      )}
 
       <form onSubmit={submit} className="space-y-4">
-        <Field label="이메일" value={form.email} onChange={update('email')} type="email" placeholder="example@raio.tv" autoComplete="email" />
-        {isRegister && <Field label="닉네임" value={form.nickname} onChange={update('nickname')} placeholder="방송/채팅에서 보일 이름" autoComplete="nickname" />}
-        {isRegister && <Field label="휴대폰 번호" value={form.phoneNumber} onChange={update('phoneNumber')} placeholder="010-0000-0000" autoComplete="tel" />}
-        <Field label="비밀번호" value={form.password} onChange={update('password')} type="password" placeholder="8자 이상" autoComplete={isRegister ? 'new-password' : 'current-password'} />
-        {isRegister && <Field label="비밀번호 확인" value={form.passwordConfirm} onChange={update('passwordConfirm')} type="password" placeholder="비밀번호 재입력" autoComplete="new-password" />}
+        <Field
+          label="이메일"
+          value={form.email}
+          onChange={update('email')}
+          type="email"
+          placeholder="example@raio.tv"
+          autoComplete="email"
+        />
+        {isRegister && (
+          <Field
+            label="닉네임"
+            value={form.nickname}
+            onChange={update('nickname')}
+            placeholder="방송/채팅에서 보일 이름"
+            autoComplete="nickname"
+          />
+        )}
+        {isRegister && (
+          <Field
+            label="휴대폰 번호"
+            value={form.phoneNumber}
+            onChange={update('phoneNumber')}
+            placeholder="010-0000-0000"
+            autoComplete="tel"
+          />
+        )}
+        <Field
+          label="비밀번호"
+          value={form.password}
+          onChange={update('password')}
+          type="password"
+          placeholder="8자 이상"
+          autoComplete={isRegister ? 'new-password' : 'current-password'}
+        />
+        {isRegister && (
+          <Field
+            label="비밀번호 확인"
+            value={form.passwordConfirm}
+            onChange={update('passwordConfirm')}
+            type="password"
+            placeholder="비밀번호 재입력"
+            autoComplete="new-password"
+          />
+        )}
 
-        <button disabled={loading} className="w-full rounded-2xl bg-accent px-4 py-3.5 text-sm font-black text-black transition hover:opacity-90 disabled:opacity-50">
+        <button
+          disabled={loading}
+          className="w-full rounded-2xl bg-accent px-4 py-3.5 text-sm font-black text-black transition hover:opacity-90 disabled:opacity-50"
+        >
           {loading ? '처리 중...' : isRegister ? '회원가입' : '로그인'}
         </button>
       </form>
@@ -114,7 +176,10 @@ export function UserForm({ mode, compact = false, onSuccess, onModeChange }: Use
             {isRegister ? '로그인' : '회원가입'}
           </button>
         ) : (
-          <Link className="font-black text-accent hover:underline" to={isRegister ? '/login' : '/register'}>
+          <Link
+            className="font-black text-accent hover:underline"
+            to={isRegister ? '/login' : '/register'}
+          >
             {isRegister ? '로그인' : '회원가입'}
           </Link>
         )}
@@ -130,8 +195,13 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 function Field({ label, ...props }: FieldProps) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.22em] text-white/40">{label}</span>
-      <input {...props} className="w-full rounded-xl border border-border bg-bg-3 px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-accent/50" />
+      <span className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.22em] text-white/40">
+        {label}
+      </span>
+      <input
+        {...props}
+        className="w-full rounded-xl border border-border bg-bg-3 px-3.5 py-3 text-sm text-white outline-none transition placeholder:text-white/20 focus:border-accent/50"
+      />
     </label>
   )
 }

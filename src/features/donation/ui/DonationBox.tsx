@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import { usePaymentStore } from "@/entities/payment";
 import { useUserStore } from "@/features/user";
 import { usePointStore } from "@/features/payment/charge-point";
 import { formatPoint, showToast } from "@/shared";
@@ -12,9 +13,9 @@ interface DonationBoxProps {
 
 export function DonationBox({ onDonate }: DonationBoxProps) {
   const token = useUserStore((state) => state.token);
-  const balance = usePointStore((state) => state.balance);
-  const spendPoint = usePointStore((state) => state.spendPoint);
-  const openModal = usePointStore((state) => state.openModal);
+  const balance = usePaymentStore((state) => state.balance);
+  const deductBalance = usePaymentStore((state) => state.deductBalance);
+  const openCharge = usePointStore((state) => state.openCharge);
   const [amount, setAmount] = useState(500);
   const [message, setMessage] = useState("");
 
@@ -25,12 +26,14 @@ export function DonationBox({ onDonate }: DonationBoxProps) {
     }
 
     if (balance < amount) {
-      openModal();
+      openCharge();
       showToast("포인트가 부족합니다.", "error");
       return;
     }
 
-    spendPoint(amount);
+    const success = deductBalance(amount);
+    if (!success) return;
+
     onDonate?.(amount, message);
     setMessage("");
     showToast(`${formatPoint(amount)} 후원 완료`, "success");
@@ -40,16 +43,18 @@ export function DonationBox({ onDonate }: DonationBoxProps) {
     <section className="rounded-[2rem] border border-accent-2/20 bg-bg-2 p-5">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-black">후원하기</h3>
-        <span className="text-xs text-white/40">
-          보유 {formatPoint(balance)}
-        </span>
+        <span className="text-xs text-white/40">보유 {formatPoint(balance)}</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {DONATION_AMOUNTS.map((item) => (
           <button
             key={item}
             onClick={() => setAmount(item)}
-            className={`rounded-xl border py-2 text-xs font-black ${amount === item ? "border-accent-2 bg-accent-2/10 text-accent-2" : "border-border bg-bg-3 text-white/45"}`}
+            className={`rounded-xl border py-2 text-xs font-black ${
+              amount === item
+                ? "border-accent-2 bg-accent-2/10 text-accent-2"
+                : "border-border bg-bg-3 text-white/45"
+            }`}
           >
             {formatPoint(item)}
           </button>

@@ -1,36 +1,39 @@
 import { create } from 'zustand'
-import type { Wallet, PointHistory } from './paymentTypes'
+import { getWallet } from '../api/paymentApi'
 
 interface PaymentState {
-  wallet: Wallet
-  histories: PointHistory[]
-  chargePoint: (amount: number) => void
+  walletId: string | null
+  balance: number
+  walletLoading: boolean
+  loadWallet: (userId: string) => Promise<void>
+  deductBalance: (amount: number) => boolean
+  clear: () => void
 }
 
-export const usePaymentStore = create<PaymentState>((set) => ({
-  wallet: {
-    point: 50000,
-    updatedAt: new Date().toISOString(),
+export const usePaymentStore = create<PaymentState>((set, get) => ({
+  walletId: null,
+  balance: 0,
+  walletLoading: false,
+
+  /** 로그인 후 지갑 조회. 없으면 생성. */
+  loadWallet: async (userId) => {
+    set({ walletLoading: true })
+    try {
+      const wallet = await getWallet(userId)
+      set({ walletId: wallet.id, balance: wallet.balance })
+    } catch {
+      set({ balance: 0 })
+    } finally {
+      set({ walletLoading: false })
+    }
   },
 
-  histories: [],
+  /** 도네이션 등 낙관적 차감 (백엔드 미연동 구간용) */
+  deductBalance: (amount) => {
+    if (get().balance < amount) return false
+    set((state) => ({ balance: state.balance - amount }))
+    return true
+  },
 
-  chargePoint: (amount) =>
-    set((state) => ({
-      wallet: {
-        point: state.wallet.point + amount,
-        updatedAt: new Date().toISOString(),
-      },
-
-      histories: [
-        {
-          id: crypto.randomUUID(),
-          type: 'CHARGE',
-          amount,
-          createdAt: new Date().toISOString(),
-          description: '포인트 충전',
-        },
-        ...state.histories,
-      ],
-    })),
+  clear: () => set({ walletId: null, balance: 0, walletLoading: false }),
 }))

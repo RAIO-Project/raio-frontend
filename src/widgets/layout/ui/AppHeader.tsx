@@ -1,16 +1,18 @@
 import { useNavigate } from "react-router-dom";
 
+import { usePaymentStore } from "@/entities/payment";
 import { useStreamStore } from "@/entities/stream";
-import { useUserStore } from "@/features/user";
-import { formatPoint } from "@/shared";
+import { logoutUser, useUserStore } from "@/features/user";
 import { usePointStore } from "@/features/payment/charge-point";
+import { formatPoint } from "@/shared";
 
 export function AppHeader() {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
   const token = useUserStore((state) => state.token);
   const logout = useUserStore((state) => state.logout);
-  const balance = usePointStore((state) => state.balance);
+  const balance = usePaymentStore((state) => state.balance);
+  const clearWallet = usePaymentStore((state) => state.clear);
   const openCharge = usePointStore((state) => state.openCharge);
   const openAuth = usePointStore((state) => state.openAuth);
   const query = useStreamStore((state) => state.query);
@@ -22,8 +24,14 @@ export function AppHeader() {
     else openAuth();
   };
 
-  const signOut = () => {
+  const signOut = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // 서버 오류와 무관하게 로컬 세션 초기화
+    }
     logout();
+    clearWallet();
     navigate("/login");
   };
 
