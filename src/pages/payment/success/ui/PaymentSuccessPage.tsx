@@ -2,19 +2,20 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { confirmPayment, usePaymentStore } from '@/entities/payment'
+import { usePointStore } from '@/features/payment/charge-point'
 import { useUserStore } from '@/features/user'
-import { showToast } from '@/shared'
 
-type Status = 'confirming' | 'done' | 'error'
+type Status = 'confirming' | 'error'
 
 export function PaymentSuccessPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const user = useUserStore((state) => state.user)
   const loadWallet = usePaymentStore((state) => state.loadWallet)
+  const openSuccess = usePointStore((state) => state.openSuccess)
   const [status, setStatus] = useState<Status>('confirming')
   const [errorMsg, setErrorMsg] = useState('')
-  const calledRef = useRef(false) // StrictMode 이중 실행 방지
+  const calledRef = useRef(false)
 
   useEffect(() => {
     if (calledRef.current) return
@@ -23,7 +24,7 @@ export function PaymentSuccessPage() {
     const paymentKey = searchParams.get('paymentKey') ?? ''
     const orderId = searchParams.get('orderId') ?? ''
     const amount = Number(searchParams.get('amount') ?? '0')
-    const paymentId = sessionStorage.getItem(`toss:${orderId}`) ?? ''
+    const paymentId = localStorage.getItem(`toss:${orderId}`) ?? ''
 
     if (!paymentKey || !orderId || !amount || !paymentId) {
       setStatus('error')
@@ -33,11 +34,10 @@ export function PaymentSuccessPage() {
 
     confirmPayment({ paymentId, paymentKey, orderId, amount })
       .then(async () => {
-        sessionStorage.removeItem(`toss:${orderId}`)
+        localStorage.removeItem(`toss:${orderId}`)
         if (user) await loadWallet(user.id)
-        setStatus('done')
-        showToast('포인트 충전이 완료되었습니다.', 'success')
-        setTimeout(() => navigate('/'), 1500)
+        openSuccess(amount)
+        navigate('/', { replace: true })
       })
       .catch(() => {
         setStatus('error')
@@ -51,18 +51,6 @@ export function PaymentSuccessPage() {
         <>
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-accent border-t-transparent" />
           <p className="text-sm text-white/60">결제를 확인하는 중입니다…</p>
-        </>
-      )}
-
-      {status === 'done' && (
-        <>
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/10 text-4xl">
-            ✓
-          </div>
-          <div>
-            <p className="text-xl font-black text-accent">충전 완료!</p>
-            <p className="mt-1 text-sm text-white/50">잠시 후 홈으로 이동합니다.</p>
-          </div>
         </>
       )}
 

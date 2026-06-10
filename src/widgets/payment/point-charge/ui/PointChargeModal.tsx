@@ -39,12 +39,9 @@ export function PointChargeModal() {
     [eventCash, selected],
   )
 
-  // 모달이 열릴 때 위젯 초기화
+  // 유저 준비 시 위젯을 한 번만 초기화 — 모달 열림과 무관하게 백그라운드에서 선로드
   useEffect(() => {
-    if (!isOpen || !user || !CLIENT_KEY) return
-
-    setWidgetReady(false)
-    let cancelled = false
+    if (!user || !CLIENT_KEY || widgetsRef.current) return
 
     const tossPayments = window.TossPayments(CLIENT_KEY)
     const widgets = tossPayments.widgets({ customerKey: `user-${user.id}` })
@@ -52,31 +49,24 @@ export function PointChargeModal() {
 
     ;(async () => {
       try {
-        await widgets.setAmount({ value: selected.amount, currency: 'KRW' })
-        if (cancelled) return
-        await widgets.renderPaymentMethods({ selector: '#toss-payment-methods', variantKey: 'DEFAULT' })
-        if (cancelled) return
-        await widgets.renderAgreement({ selector: '#toss-agreement', variantKey: 'AGREEMENT' })
-        if (!cancelled) setWidgetReady(true)
+        await widgets.setAmount({ value: CHARGE_OPTIONS[2].amount, currency: 'KRW' })
+        // 두 위젯 병렬 렌더
+        await Promise.all([
+          widgets.renderPaymentMethods({ selector: '#toss-payment-methods', variantKey: 'DEFAULT' }),
+          widgets.renderAgreement({ selector: '#toss-agreement', variantKey: 'AGREEMENT' }),
+        ])
+        setWidgetReady(true)
       } catch {
-        if (!cancelled) showToast('결제 위젯을 불러오지 못했습니다.', 'error')
+        showToast('결제 위젯을 불러오지 못했습니다.', 'error')
       }
     })()
-
-    return () => {
-      cancelled = true
-      widgetsRef.current = null
-      setWidgetReady(false)
-    }
-  }, [isOpen, user]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user])
 
   // 금액 변경 시 위젯 금액 동기화
   useEffect(() => {
     if (!widgetReady || !widgetsRef.current) return
-    void widgetsRef.current.setAmount({ value: totalPoint, currency: 'KRW' })
-  }, [totalPoint, widgetReady])
-
-  if (!isOpen) return null
+    void widgetsRef.current.setAmount({ value: selected.amount, currency: 'KRW' })
+  }, [selected.amount, widgetReady])
 
   const handlePayment = async () => {
     if (!user || !CLIENT_KEY || !widgetsRef.current) return
@@ -86,11 +76,11 @@ export function PointChargeModal() {
       const prepared = await preparePayment({
         userId: user.id,
         amount: selected.amount,
-        method: 'CARD',
+        method: 'EASY_PAY',
         pgProvider: 'TOSS',
       })
 
-      sessionStorage.setItem(`toss:${prepared.orderId}`, prepared.paymentId)
+      localStorage.setItem(`toss:${prepared.orderId}`, prepared.paymentId)
 
       await widgetsRef.current.requestPayment({
         orderId: prepared.orderId,
@@ -109,12 +99,22 @@ export function PointChargeModal() {
     }
   }
 
+  // DOM을 유지해 위젯 iframe을 살려두고, CSS transition으로 show/hide
   return (
     <div
       onClick={(event) => event.target === event.currentTarget && closeModal()}
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-[opacity,backdrop-filter] duration-200 ${
+        isOpen
+          ? 'bg-black/70 opacity-100 backdrop-blur-sm [pointer-events:auto]'
+          : 'opacity-0 [pointer-events:none]'
+      }`}
+      aria-hidden={!isOpen}
     >
-      <section className="relative max-h-[92vh] w-full max-w-[560px] overflow-y-auto rounded-[1.6rem] border border-border bg-white text-[#202124] shadow-2xl animate-slide-up">
+      <section
+        className={`relative max-h-[92vh] w-full max-w-[560px] overflow-y-auto rounded-[1.6rem] border border-border bg-white text-[#202124] shadow-2xl transition-[transform,opacity] duration-200 ${
+          isOpen ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
+        }`}
+      >
         <div className="sticky top-0 z-10 flex items-center justify-center border-b border-black/10 bg-white/95 px-5 py-3 backdrop-blur">
           <h2 className="text-xl font-black">캐시 충전</h2>
           <button

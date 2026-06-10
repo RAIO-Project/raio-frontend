@@ -22,7 +22,7 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
       const wallet = await getWallet(userId)
       set({ walletId: wallet.id, balance: wallet.balance })
     } catch {
-      set({ balance: 0 })
+      // 네트워크 에러 시 기존 잔액 유지
     } finally {
       set({ walletLoading: false })
     }

@@ -7,6 +7,7 @@ import { StreamDetailPage } from "@/pages/stream/stream-detail";
 import { StreamStudioPage } from "@/pages/stream/stream-studio";
 import { UserPage } from "@/pages/user";
 import { UserMyPage } from "@/pages/user/my-page";
+import { PaymentSuccessModal } from "@/widgets/payment/payment-success";
 
 export function RouterProvider() {
   return (
@@ -22,6 +23,7 @@ export function RouterProvider() {
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <PaymentSuccessModal />
     </BrowserRouter>
   );
 }
