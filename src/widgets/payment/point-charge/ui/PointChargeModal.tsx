@@ -33,24 +33,31 @@ export function PointChargeModal() {
   const [widgetReady, setWidgetReady] = useState(false)
 
   const widgetsRef = useRef<TossWidgets | null>(null)
+  // 어떤 userId로 초기화했는지 추적 — 로그아웃/재로그인 시 재초기화
+  const initializedForRef = useRef<string | null>(null)
 
   const totalPoint = useMemo(
     () => selected.amount + (eventCash ? (selected.bonus ?? 0) : 0),
     [eventCash, selected],
   )
 
-  // 유저 준비 시 위젯을 한 번만 초기화 — 모달 열림과 무관하게 백그라운드에서 선로드
+  // 모달이 열릴 때(visible 상태) 처음 한 번만 초기화 — 이후 DOM이 살아있으므로 즉시 표시
   useEffect(() => {
-    if (!user || !CLIENT_KEY || widgetsRef.current) return
+    if (!isOpen || !user || !CLIENT_KEY) return
+    if (initializedForRef.current === user.id && widgetsRef.current) return
+
+    widgetsRef.current = null
+    initializedForRef.current = null
+    setWidgetReady(false)
 
     const tossPayments = window.TossPayments(CLIENT_KEY)
     const widgets = tossPayments.widgets({ customerKey: `user-${user.id}` })
     widgetsRef.current = widgets
+    initializedForRef.current = user.id
 
     ;(async () => {
       try {
-        await widgets.setAmount({ value: CHARGE_OPTIONS[2].amount, currency: 'KRW' })
-        // 두 위젯 병렬 렌더
+        await widgets.setAmount({ value: selected.amount, currency: 'KRW' })
         await Promise.all([
           widgets.renderPaymentMethods({ selector: '#toss-payment-methods', variantKey: 'DEFAULT' }),
           widgets.renderAgreement({ selector: '#toss-agreement', variantKey: 'AGREEMENT' }),
@@ -58,9 +65,11 @@ export function PointChargeModal() {
         setWidgetReady(true)
       } catch {
         showToast('결제 위젯을 불러오지 못했습니다.', 'error')
+        widgetsRef.current = null
+        initializedForRef.current = null
       }
     })()
-  }, [user])
+  }, [isOpen, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // 금액 변경 시 위젯 금액 동기화
   useEffect(() => {
@@ -99,7 +108,7 @@ export function PointChargeModal() {
     }
   }
 
-  // DOM을 유지해 위젯 iframe을 살려두고, CSS transition으로 show/hide
+  // 모달 DOM 항상 유지 → 위젯 iframe 보존, CSS transition으로 show/hide
   return (
     <div
       onClick={(event) => event.target === event.currentTarget && closeModal()}

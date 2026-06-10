@@ -83,6 +83,12 @@ export function AppHeader() {
                 {user?.email}
               </p>
               <button
+                onClick={() => navigate('/my-page')}
+                className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
+              >
+                마이페이지
+              </button>
+              <button
                 onClick={signOut}
                 className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
               >

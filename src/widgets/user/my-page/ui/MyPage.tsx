@@ -1,4 +1,5 @@
 import { EditProfileForm } from '@/features/user/edit-profile'
+import { PointHistoryPanel } from '@/widgets/payment/point-history'
 import { WalletPanel } from '@/widgets/payment/wallet-panel'
 
 export function MyPage() {
@@ -16,7 +17,10 @@ export function MyPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
         <EditProfileForm />
-        <WalletPanel />
+        <div className="flex flex-col gap-6">
+          <WalletPanel />
+          <PointHistoryPanel />
+        </div>
       </div>
     </main>
   )

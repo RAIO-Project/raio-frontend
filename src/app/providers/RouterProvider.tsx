@@ -7,6 +7,7 @@ import { StreamDetailPage } from "@/pages/stream/stream-detail";
 import { StreamStudioPage } from "@/pages/stream/stream-studio";
 import { UserPage } from "@/pages/user";
 import { UserMyPage } from "@/pages/user/my-page";
+import { AuthGateModal, PointChargeModal } from "@/widgets/payment/point-charge";
 import { PaymentSuccessModal } from "@/widgets/payment/payment-success";
 
 export function RouterProvider() {
@@ -23,6 +24,9 @@ export function RouterProvider() {
         <Route path="/payment/fail" element={<PaymentFailPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      {/* 페이지 이동과 무관하게 항상 마운트 — 위젯 iframe 유지 */}
+      <PointChargeModal />
+      <AuthGateModal />
       <PaymentSuccessModal />
     </BrowserRouter>
   );
