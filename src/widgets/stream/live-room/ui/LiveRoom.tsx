@@ -4,6 +4,7 @@ import { ChatPanel, useChat } from '@/features/chat'
 import { DonationBox } from '@/features/donation'
 import { VideoStage } from './VideoStage'
 
+// Stream(목록) / StreamDetail(상세) 공통으로 받는 최소 형태
 interface LiveRoomStream {
   id: string
   streamerId: string
@@ -19,7 +20,7 @@ interface LiveRoomProps {
 
 export function LiveRoom({ stream }: LiveRoomProps) {
   const [followed, setFollowed] = useState(false)
-  const chat = useChat(stream.id)
+  const chat = useChat(stream.id) // 백엔드 streamId 는 string
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -45,7 +46,7 @@ export function LiveRoom({ stream }: LiveRoomProps) {
           </div>
         </section>
         <div className="mt-4">
-          <DonationBox onDonate={chat.pushDonation} />
+          <DonationBox streamId={stream.id} streamerId={stream.streamerId} />
         </div>
       </div>
       <div className="hidden w-[330px] shrink-0 border-l border-border lg:block">

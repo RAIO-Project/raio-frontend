@@ -1,1 +1,6 @@
-export type { DonationPayload } from './model/types'
+export type {
+  DonationPayload,
+  CreateDonationRequest,
+  CreateDonationResponse,
+} from './model/types'
+export { createDonation } from './api/donationApi'

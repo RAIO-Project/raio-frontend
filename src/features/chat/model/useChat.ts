@@ -114,12 +114,5 @@ export function useChat(streamId: string) {
     [user, streamId],
   )
 
-  const pushDonation = useCallback(
-    (_amount: number, _text: string) => {
-      // TODO: 도네이션 백엔드 연동 시 publish 추가 (DonationMessage)
-    },
-    [],
-  )
-
-  return { messages, connected, sendMessage, pushDonation }
+  return { messages, connected, sendMessage }
 }
