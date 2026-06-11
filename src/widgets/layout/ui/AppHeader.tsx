@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { usePaymentStore } from "@/entities/payment";
@@ -18,6 +19,20 @@ export function AppHeader() {
   const query = useStreamStore((state) => state.query);
   const setQuery = useStreamStore((state) => state.setQuery);
   const loadStreams = useStreamStore((state) => state.loadStreams);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   const openPointCharge = () => {
     if (token) openCharge();
@@ -72,29 +87,34 @@ export function AppHeader() {
         </button>
 
         {token ? (
-          <div className="group relative">
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-xs font-black text-black">
+          <div ref={menuRef} className="relative">
+            <button
+              onClick={() => setMenuOpen((o) => !o)}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-xs font-black text-black"
+            >
               {user?.nickname?.[0] || "나"}
             </button>
-            <div className="absolute right-0 top-11 z-50 hidden w-44 rounded-2xl border border-border bg-bg-3 p-2 shadow-2xl group-hover:block">
-              <p className="px-3 py-2 text-[11px] text-white/40">
-                {user?.nickname}
-                <br />
-                {user?.email}
-              </p>
-              <button
-                onClick={() => navigate('/my-page')}
-                className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
-              >
-                마이페이지
-              </button>
-              <button
-                onClick={signOut}
-                className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
-              >
-                로그아웃
-              </button>
-            </div>
+            {menuOpen && (
+              <div className="absolute right-0 top-11 z-50 w-44 rounded-2xl border border-border bg-bg-3 p-2 shadow-2xl animate-slide-up">
+                <p className="px-3 py-2 text-[11px] text-white/40">
+                  {user?.nickname}
+                  <br />
+                  {user?.email}
+                </p>
+                <button
+                  onClick={() => { navigate('/my-page'); setMenuOpen(false); }}
+                  className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
+                >
+                  마이페이지
+                </button>
+                <button
+                  onClick={() => { void signOut(); setMenuOpen(false); }}
+                  className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold text-white/55 hover:bg-bg-4 hover:text-white"
+                >
+                  로그아웃
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button

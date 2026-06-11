@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { preparePayment, usePaymentStore } from '@/entities/payment'
 import { usePointStore } from '@/features/payment/charge-point'
@@ -7,16 +7,14 @@ import { formatPoint, showToast } from '@/shared'
 
 interface ChargeOption {
   amount: number
-  bonus?: number
-  label?: string
 }
 
 const CHARGE_OPTIONS: ChargeOption[] = [
   { amount: 3_000 },
   { amount: 6_000 },
-  { amount: 9_000, bonus: 1_000, label: '이달 EVENT!' },
-  { amount: 15_000, bonus: 2_000, label: '적립' },
-  { amount: 30_000, bonus: 4_500, label: '적립' },
+  { amount: 9_000 },
+  { amount: 15_000 },
+  { amount: 30_000 },
 ]
 
 const CLIENT_KEY = import.meta.env.VITE_TOSS_CLIENT_KEY as string
@@ -28,18 +26,12 @@ export function PointChargeModal() {
   const user = useUserStore((state) => state.user)
 
   const [selected, setSelected] = useState<ChargeOption>(CHARGE_OPTIONS[2])
-  const [eventCash, setEventCash] = useState(true)
   const [loading, setLoading] = useState(false)
   const [widgetReady, setWidgetReady] = useState(false)
 
   const widgetsRef = useRef<TossWidgets | null>(null)
   // 어떤 userId로 초기화했는지 추적 — 로그아웃/재로그인 시 재초기화
   const initializedForRef = useRef<string | null>(null)
-
-  const totalPoint = useMemo(
-    () => selected.amount + (eventCash ? (selected.bonus ?? 0) : 0),
-    [eventCash, selected],
-  )
 
   // 모달이 열릴 때(visible 상태) 처음 한 번만 초기화 — 이후 DOM이 살아있으므로 즉시 표시
   useEffect(() => {
@@ -144,20 +136,9 @@ export function PointChargeModal() {
 
           {/* 충전 금액 선택 */}
           <div>
-            <div className="mb-3 flex items-center justify-between border-b border-black/10 pb-3">
-              <div className="flex items-center gap-2 text-lg font-bold">
-                <span className="text-2xl">◎</span>
-                결제 금액
-              </div>
-              <label className="flex cursor-pointer items-center gap-2 text-sm text-black/70">
-                <input
-                  checked={eventCash}
-                  onChange={(event) => setEventCash(event.target.checked)}
-                  type="checkbox"
-                  className="h-4 w-4 accent-[#ef6461]"
-                />
-                이벤트 캐시 받기
-              </label>
+            <div className="mb-3 flex items-center gap-2 border-b border-black/10 pb-3 text-lg font-bold">
+              <span className="text-2xl">◎</span>
+              결제 금액
             </div>
             <div className="grid grid-cols-2 gap-x-7 gap-y-4">
               {CHARGE_OPTIONS.map((option) => {
@@ -173,14 +154,7 @@ export function PointChargeModal() {
                     >
                       {active && <span className="m-1 block h-3.5 w-3.5 rounded-full bg-[#ef6461]" />}
                     </span>
-                    <span className="font-medium">
-                      {formatPoint(option.amount)}
-                      {option.bonus ? (
-                        <span className="ml-1 font-black text-[#ef6461]">
-                          + {formatPoint(option.bonus)} {option.label}
-                        </span>
-                      ) : null}
-                    </span>
+                    <span className="font-medium">{formatPoint(option.amount)}</span>
                   </button>
                 )
               })}
@@ -202,21 +176,9 @@ export function PointChargeModal() {
           </div>
 
           {/* 충전 요약 */}
-          <div className="space-y-1 text-sm text-black/60">
-            <div className="flex justify-between">
-              <span>결제 금액</span>
-              <strong className="text-black">{formatPoint(selected.amount)}</strong>
-            </div>
-            {eventCash && (selected.bonus ?? 0) > 0 && (
-              <div className="flex justify-between text-[#ef6461]">
-                <span>이벤트 캐시</span>
-                <strong>+ {formatPoint(selected.bonus ?? 0)}</strong>
-              </div>
-            )}
-            <div className="flex justify-between border-t border-black/10 pt-2 font-bold text-black">
-              <span>충전 캐시</span>
-              <span>{formatPoint(totalPoint)}</span>
-            </div>
+          <div className="flex justify-between border-t border-black/10 pt-3 text-sm font-bold text-black">
+            <span>충전 캐시</span>
+            <span>{formatPoint(selected.amount)}</span>
           </div>
 
           <button

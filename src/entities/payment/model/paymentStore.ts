@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { getWallet } from '../api/paymentApi'
+import { createWallet, getWallet } from '../api/paymentApi'
 
 interface PaymentState {
   walletId: string | null
@@ -15,14 +15,23 @@ export const usePaymentStore = create<PaymentState>((set, get) => ({
   balance: 0,
   walletLoading: false,
 
-  /** 로그인 후 지갑 조회. 없으면 생성. */
   loadWallet: async (userId) => {
     set({ walletLoading: true })
     try {
       const wallet = await getWallet(userId)
       set({ walletId: wallet.id, balance: wallet.balance })
-    } catch {
-      // 네트워크 에러 시 기존 잔액 유지
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status
+      if (status === 404) {
+        // 지갑 없는 신규 유저 — 자동 생성
+        try {
+          const wallet = await createWallet(userId)
+          set({ walletId: wallet.id, balance: wallet.balance })
+        } catch {
+          // 생성 실패 시 기존 상태 유지
+        }
+      }
+      // 그 외 네트워크 오류는 기존 잔액 유지
     } finally {
       set({ walletLoading: false })
     }
