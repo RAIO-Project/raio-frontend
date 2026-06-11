@@ -1,3 +1,22 @@
-export { CATEGORIES, MOCK_STREAMS, filterStreams, findStreamById, useStreamStore } from './model/streamStore'
-export type { Stream, StreamCategory } from './model/streamStore'
+export { CATEGORIES, useStreamStore } from './model/streamStore'
+export {
+  CATEGORY_LABELS,
+  toCategoryCode,
+  toCategoryLabel,
+} from './model/streamTypes'
+export type {
+  Stream,
+  StreamDetail,
+  StreamCategoryLabel,
+  StreamCategoryCode,
+  StreamStatusCode,
+  StreamSort,
+} from './model/streamTypes'
+export {
+  fetchStreamsLatest,
+  fetchStreamsByViewer,
+  fetchStreamDetail,
+  createStream,
+  startStream,
+} from './api/streamApi'
 export { StreamCard } from './ui/StreamCard'

@@ -16,8 +16,13 @@ export default defineConfig(({ mode }) => {
       global: 'window',
     },
     server: {
+      port: 3000,
       proxy: {
-        '/api': {
+        '/auth': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/users': {
           target: env.VITE_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },

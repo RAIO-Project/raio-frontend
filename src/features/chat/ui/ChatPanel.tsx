@@ -39,7 +39,7 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
         <b className="text-xs">실시간 채팅</b>
         <span className="flex items-center gap-1 text-[11px] text-white/40">
           <i className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-accent-green' : 'bg-white/20'}`} />
-          {connected ? '연결됨' : 'mock'}
+          {connected ? '연결됨' : '연결 중…'}
         </span>
       </div>
 

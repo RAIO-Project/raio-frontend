@@ -1,69 +1,50 @@
-import type { LoginRequest, RegisterRequest, User, UserSession } from '@/entities/user'
+import { httpClient } from '@/shared'
+import type { LoginRequest, RegisterRequest, TokenPairResponse, User, UserRole, UserSession } from '@/entities/user'
 
-const USER_DB_KEY = 'raio.mock.users'
-
-interface StoredUser extends User {
-  password: string
-}
-
-function readUsers(): StoredUser[] {
-  try {
-    return JSON.parse(localStorage.getItem(USER_DB_KEY) ?? '[]') as StoredUser[]
-  } catch {
-    return []
+function buildUserFromToken(
+  accessToken: string,
+  email: string,
+  overrides?: Partial<Pick<User, 'nickname'>>,
+): User {
+  const raw = accessToken.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+  const payload = JSON.parse(atob(raw)) as {
+    sub: string
+    roles?: string[]
+    nickname?: string
   }
-}
-
-function writeUsers(users: StoredUser[]): void {
-  localStorage.setItem(USER_DB_KEY, JSON.stringify(users))
-}
-
-function sanitizeUser(user: StoredUser): User {
-  const { password: _password, ...safeUser } = user
-  return safeUser
-}
-
-function createToken(userId: string): string {
-  return `mock-token-${userId}-${Date.now()}`
-}
-
-export async function loginUser(payload: LoginRequest): Promise<UserSession> {
-  const users = readUsers()
-  const user = users.find((item) => item.email === payload.email && item.password === payload.password)
-  if (!user || user.status !== 'ACTIVE') {
-    throw new Error('Invalid credentials')
-  }
-
-  const updated: StoredUser = { ...user, lastLoginAt: new Date().toISOString() }
-  writeUsers(users.map((item) => (item.id === user.id ? updated : item)))
-
   return {
-    user: sanitizeUser(updated),
-    token: createToken(updated.id),
+    id: String(payload.sub),
+    email,
+    nickname: overrides?.nickname ?? payload.nickname ?? '',
+    phoneNumber: '',
+    role: (payload.roles?.[0] ?? 'USER') as UserRole,
+    status: 'ACTIVE',
+    lastLoginAt: null,
+  }
+}
+
+export async function loginUser(
+  payload: LoginRequest,
+  overrides?: Partial<Pick<User, 'nickname'>>,
+): Promise<UserSession> {
+  const { data } = await httpClient.post<TokenPairResponse>('/auth/login', payload)
+  return {
+    user: buildUserFromToken(data.accessToken, payload.email, overrides),
+    accessToken: data.accessToken,
+    refreshToken: data.refreshToken,
   }
 }
 
 export async function registerUser(payload: RegisterRequest): Promise<UserSession> {
-  const users = readUsers()
-  if (users.some((item) => item.email === payload.email)) {
-    throw new Error('Duplicated email')
-  }
+  await httpClient.post<number>('/auth/register', payload)
+  return loginUser({ email: payload.email, password: payload.password }, { nickname: payload.nickname })
+}
 
-  const user: StoredUser = {
-    id: crypto.randomUUID(),
-    email: payload.email,
-    password: payload.password,
-    nickname: payload.nickname,
-    phoneNumber: payload.phoneNumber,
-    role: 'USER',
-    status: 'ACTIVE',
-    lastLoginAt: new Date().toISOString(),
-  }
+export async function logoutUser(): Promise<void> {
+  await httpClient.post('/auth/logout')
+}
 
-  writeUsers([...users, user])
-
-  return {
-    user: sanitizeUser(user),
-    token: createToken(user.id),
-  }
+export async function refreshTokens(refreshToken: string): Promise<TokenPairResponse> {
+  const { data } = await httpClient.post<TokenPairResponse>('/auth/refresh', { refreshToken })
+  return data
 }

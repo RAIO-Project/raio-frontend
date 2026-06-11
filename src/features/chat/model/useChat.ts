@@ -1,64 +1,83 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Client } from '@stomp/stompjs'
-import SockJS from 'sockjs-client'
 
 import type { ChatMessage } from '@/entities/chat'
 import { useUserStore } from '@/features/user'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'http://localhost:8080'
+// 백엔드 WebSocket 베이스 (예: ws://localhost:8080). REST 와 별도 env.
+const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 
-const seedMessages: ChatMessage[] = [
-  { id: 1, type: 'notice', text: '욕설·도배는 운영 정책에 따라 제한됩니다.' },
-  { id: 2, type: 'donation', senderNickname: '도네왕', amount: 1000, text: '오늘 꼭 성공하자!' },
-  { id: 3, type: 'chat', role: 'admin', senderNickname: '관리자', text: '신규 시청자 환영합니다.' },
-  { id: 4, type: 'chat', role: 'normal', senderNickname: '하늘별', text: 'ㅋㅋㅋ 오늘 텐션 좋다' },
-]
-
-interface ServerChatMessage {
+// 서버 → 클라 브로드캐스트 페이로드 (ChatWebSocketDto.ChatBroadcastEvent / StreamPresenceEvent)
+interface ServerRelayEvent {
+  type?: string // "CHAT" | "JOIN" | "LEAVE" (도네이션 추가 시 "DONATION")
+  streamId?: string
+  userId?: string
   senderNickname?: string
+  nickname?: string
   message?: string
   amount?: number
+  isBlocked?: boolean
 }
 
-export function useChat(streamId: number) {
-  const [messages, setMessages] = useState<ChatMessage[]>(seedMessages)
+export function useChat(streamId: string) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connected, setConnected] = useState(false)
-  const idRef = useRef(100)
+  const idRef = useRef(1)
   const clientRef = useRef<Client | null>(null)
   const user = useUserStore((state) => state.user)
-  const token = useUserStore((state) => state.token)
 
   useEffect(() => {
     if (!streamId) return undefined
 
+    // 인증: StompAuthInterceptor 가 쿼리파라미터(userId, nickname)를 읽는다.
+    // 비로그인 시에도 구독(보기)은 가능하도록 연결은 시도한다.
+    const nickname = user?.nickname || (user ? `유저${user.id}` : '익명')
+    const params = user ? `?userId=${user.id}&nickname=${encodeURIComponent(nickname)}` : ''
+
     const client = new Client({
-      webSocketFactory: () => new SockJS(`${WS_URL}/ws`),
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      brokerURL: `${WS_BASE}/ws/chat${params}`,
       reconnectDelay: 5000,
       onConnect: () => {
         setConnected(true)
-        client.subscribe(`/sub/chat/${streamId}`, (frame) => {
-          const body = JSON.parse(frame.body) as ServerChatMessage
+        // 백엔드 토픽: /topic/streams/{streamId} (CHAT/JOIN/LEAVE 가 섞여 옴)
+        client.subscribe(`/topic/streams/${streamId}`, (frame) => {
+          const body = JSON.parse(frame.body) as ServerRelayEvent
+          const t = body.type ?? 'CHAT'
+
+          if (t === 'JOIN' || t === 'LEAVE') {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: idRef.current++,
+                type: 'notice',
+                text: `${body.nickname ?? '누군가'}님이 ${t === 'JOIN' ? '입장' : '퇴장'}했습니다.`,
+              },
+            ])
+            return
+          }
+
+          if (t === 'DONATION') {
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: idRef.current++,
+                type: 'donation',
+                senderNickname: body.senderNickname ?? body.nickname ?? '익명',
+                amount: body.amount ?? 0,
+                text: body.message ?? '',
+              },
+            ])
+            return
+          }
+
+          // CHAT
           setMessages((prev) => [
             ...prev,
             {
               id: idRef.current++,
               type: 'chat',
-              role: 'normal',
+              role: body.userId && user && body.userId === String(user.id) ? 'me' : 'normal',
               senderNickname: body.senderNickname ?? '익명',
-              text: body.message ?? '',
-            },
-          ])
-        })
-        client.subscribe(`/sub/donation/${streamId}`, (frame) => {
-          const body = JSON.parse(frame.body) as ServerChatMessage
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: idRef.current++,
-              type: 'donation',
-              senderNickname: body.senderNickname ?? '익명',
-              amount: body.amount ?? 0,
               text: body.message ?? '',
             },
           ])
@@ -77,48 +96,23 @@ export function useChat(streamId: number) {
       clientRef.current = null
       setConnected(false)
     }
-  }, [streamId, token])
+  }, [streamId, user])
 
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !user) return
+      if (!clientRef.current?.connected) return
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: idRef.current++,
-          type: 'chat',
-          role: 'me',
-          senderNickname: user.nickname || '나',
-          text,
-        },
-      ])
-
-      if (connected && clientRef.current?.connected) {
-        clientRef.current.publish({
-          destination: `/pub/chat/${streamId}`,
-          body: JSON.stringify({ userId: user.id, senderNickname: user.nickname, message: text }),
-        })
-      }
+      // 백엔드: @MessageMapping("/streams/{streamId}/chat"), prefix "/app"
+      // 페이로드: ChatSendCommand { message } 만. userId/nickname 은 서버가 세션에서 가져옴.
+      clientRef.current.publish({
+        destination: `/app/streams/${streamId}/chat`,
+        body: JSON.stringify({ message: text.trim() }),
+      })
+      // 낙관적 표시 안 함: 서버 브로드캐스트가 돌아오면 구독 콜백에서 추가됨(에코)
     },
-    [connected, streamId, user],
+    [user, streamId],
   )
 
-  const pushDonation = useCallback(
-    (amount: number, text: string) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: idRef.current++,
-          type: 'donation',
-          senderNickname: user?.nickname || '익명',
-          amount,
-          text,
-        },
-      ])
-    },
-    [user],
-  )
-
-  return { messages, connected, sendMessage, pushDonation }
+  return { messages, connected, sendMessage }
 }
