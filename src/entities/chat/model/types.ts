@@ -8,4 +8,6 @@ export interface ChatMessage {
   senderNickname?: string
   amount?: number
   text: string
+  chatId?: string
+  blinded?: boolean
 }
