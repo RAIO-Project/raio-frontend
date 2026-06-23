@@ -4,10 +4,9 @@ import { Client } from '@stomp/stompjs'
 import type { ChatMessage } from '@/entities/chat'
 import { useUserStore } from '@/features/user'
 
-// 백엔드 WebSocket 베이스 (예: ws://localhost:8080). REST 와 별도 env.
 const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
+const MAX_MESSAGES = 200 // 라이브 장시간 시청 시 메모리/렌더 부담 방지
 
-// 서버 → 클라 브로드캐스트 페이로드 (type 으로 분기)
 interface ServerRelayEvent {
   type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND"
   streamId?: string
@@ -31,6 +30,13 @@ export function useChat(streamId: string) {
 
   useEffect(() => {
     if (!streamId) return undefined
+
+    // 새 메시지 추가 + 최근 MAX_MESSAGES 개만 유지
+    const append = (msg: ChatMessage) =>
+      setMessages((prev) => {
+        const next = [...prev, msg]
+        return next.length > MAX_MESSAGES ? next.slice(-MAX_MESSAGES) : next
+      })
 
     // 인증: STOMP CONNECT 헤더에 JWT. 토큰 없으면 익명(비회원) 연결 → 읽기만 가능.
     const client = new Client({
@@ -56,43 +62,34 @@ export function useChat(streamId: string) {
           }
 
           if (type === 'JOIN' || type === 'LEAVE') {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: idRef.current++,
-                type: 'notice',
-                text: `${body.nickname ?? '누군가'}님이 ${type === 'JOIN' ? '입장' : '퇴장'}했습니다.`,
-              },
-            ])
+            append({
+              id: idRef.current++,
+              type: 'notice',
+              text: `${body.nickname ?? '누군가'}님이 ${type === 'JOIN' ? '입장' : '퇴장'}했습니다.`,
+            })
             return
           }
 
           if (type === 'DONATION') {
-            setMessages((prev) => [
-              ...prev,
-              {
-                id: idRef.current++,
-                type: 'donation',
-                senderNickname: body.senderNickname ?? body.nickname ?? '익명',
-                amount: body.amount ?? 0,
-                text: body.message ?? '',
-              },
-            ])
+            append({
+              id: idRef.current++,
+              type: 'donation',
+              senderNickname: body.senderNickname ?? body.nickname ?? '익명',
+              amount: body.amount ?? 0,
+              text: body.message ?? '',
+            })
             return
           }
 
           // CHAT — chatId 보관(BLIND 매칭용)
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: idRef.current++,
-              chatId: body.chatId,
-              type: 'chat',
-              role: body.userId && user && body.userId === String(user.id) ? 'me' : 'normal',
-              senderNickname: body.senderNickname ?? '익명',
-              text: body.message ?? '',
-            },
-          ])
+          append({
+            id: idRef.current++,
+            chatId: body.chatId,
+            type: 'chat',
+            role: body.userId && user && body.userId === String(user.id) ? 'me' : 'normal',
+            senderNickname: body.senderNickname ?? '익명',
+            text: body.message ?? '',
+          })
         })
       },
       onDisconnect: () => setConnected(false),
@@ -114,7 +111,6 @@ export function useChat(streamId: string) {
     (text: string) => {
       if (!text.trim() || !user) return
       if (!clientRef.current?.connected) return
-      // 페이로드: { message } 만. 신원(userId)은 서버가 CONNECT 토큰에서 가져옴.
       clientRef.current.publish({
         destination: `/app/streams/${streamId}/chat`,
         body: JSON.stringify({ message: text.trim() }),

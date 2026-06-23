@@ -20,11 +20,22 @@ interface ChatPanelProps {
 
 export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
   const [input, setInput] = useState('')
+  const scrollRef = useRef<HTMLDivElement | null>(null)
   const bottomRef = useRef<HTMLDivElement | null>(null)
+  const stickToBottom = useRef(true)
   const token = useUserStore((state) => state.token)
 
+  // 사용자가 맨 아래 근처에 있을 때만 자동 스크롤 (위로 올려 과거글 읽는 중이면 안 끌어내림)
+  const handleScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }
+
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (stickToBottom.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages])
 
   const submit = () => {
@@ -43,7 +54,7 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
         </span>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto py-2">
+      <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto py-2">
         {messages.map((msg) => {
           if (msg.type === 'notice') {
             return (
@@ -65,10 +76,18 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
           }
 
           const role = msg.role ?? 'normal'
+          // 블라인드된 메시지는 흐리게 + 이탤릭
+          if (msg.blinded) {
+            return (
+              <p key={msg.id} className="px-3 py-1 text-xs italic leading-relaxed text-white/30">
+                {msg.text}
+              </p>
+            )
+          }
           return (
             <p key={msg.id} className="px-3 py-1 text-xs leading-relaxed hover:bg-white/[0.03]">
               <b className={`mr-1.5 ${nickTone[role]}`}>{msg.senderNickname}</b>
-              <span className="break-all text-white/80">{msg.text}</span>
+              <span className="break-words text-white/80">{msg.text}</span>
             </p>
           )
         })}
@@ -83,7 +102,8 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
               maxLength={200}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') submit()
+                // 한글 IME 조합 중 Enter(글자 확정)는 전송하지 않음
+                if (event.key === 'Enter' && !event.nativeEvent.isComposing) submit()
               }}
               className="w-full bg-transparent px-2 py-2 text-sm outline-none placeholder:text-white/25"
               placeholder="채팅을 입력하세요"
