@@ -26,6 +26,22 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
+        '/streams': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/videos': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/donations': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/payment': {
+          target: env.VITE_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
         '/ws': {
           target: env.VITE_WS_URL || 'http://localhost:8080',
           changeOrigin: true,

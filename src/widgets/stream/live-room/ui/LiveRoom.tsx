@@ -2,6 +2,7 @@ import { useState } from 'react'
 
 import { ChatPanel, useChat } from '@/features/chat'
 import { DonationBox } from '@/features/donation'
+import { useUserStore } from '@/features/user'
 import { VideoStage } from './VideoStage'
 
 // Stream(목록) / StreamDetail(상세) 공통으로 받는 최소 형태
@@ -20,12 +21,19 @@ interface LiveRoomProps {
 
 export function LiveRoom({ stream }: LiveRoomProps) {
   const [followed, setFollowed] = useState(false)
-  const chat = useChat(stream.id) // 백엔드 streamId 는 string
+  const user = useUserStore((state) => state.user)
+  const chat = useChat(stream.id)
+  const isOwner = !!user && String(user.id) === stream.streamerId
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <div className="min-w-0 flex-1 overflow-y-auto p-4">
-        <VideoStage stream={{ ...stream, viewerCount: stream.viewerCount ?? 0 }} />
+        <VideoStage
+          stream={{ ...stream, viewerCount: stream.viewerCount ?? 0 }}
+          isOwner={isOwner}
+          videoEvent={chat.videoEvent}
+          onVideoSync={chat.sendVideoSync}
+        />
         <section className="mt-4 rounded-[2rem] border border-border bg-bg-2 p-5">
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-cyan-600 text-lg font-black text-black">

@@ -8,7 +8,7 @@ const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 const MAX_MESSAGES = 200 // 라이브 장시간 시청 시 메모리/렌더 부담 방지
 
 interface ServerRelayEvent {
-  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND"
+  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND" | "VIDEO"
   streamId?: string
   chatId?: string
   userId?: string
@@ -18,11 +18,22 @@ interface ServerRelayEvent {
   amount?: number
   reason?: string
   isBlocked?: boolean
+  // VIDEO
+  videoUrl?: string
+  currentTime?: number
+  playing?: boolean
+}
+
+export interface VideoSyncEvent {
+  videoUrl: string
+  currentTime: number
+  playing: boolean
 }
 
 export function useChat(streamId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connected, setConnected] = useState(false)
+  const [videoEvent, setVideoEvent] = useState<VideoSyncEvent | null>(null)
   const idRef = useRef(1)
   const clientRef = useRef<Client | null>(null)
   const user = useUserStore((state) => state.user)
@@ -31,7 +42,6 @@ export function useChat(streamId: string) {
   useEffect(() => {
     if (!streamId) return undefined
 
-    // 새 메시지 추가 + 최근 MAX_MESSAGES 개만 유지
     const append = (msg: ChatMessage) =>
       setMessages((prev) => {
         const next = [...prev, msg]
@@ -47,7 +57,17 @@ export function useChat(streamId: string) {
         setConnected(true)
         client.subscribe(`/topic/streams/${streamId}`, (frame) => {
           const body = JSON.parse(frame.body) as ServerRelayEvent
-          const type = body.type ?? 'CHAT'
+          // VideoMessage는 type을 record component로 가지지 않아 JSON에 누락될 수 있음 → videoUrl로 보완 판별
+          const type = body.type ?? (body.videoUrl ? 'VIDEO' : 'CHAT')
+
+          if (type === 'VIDEO') {
+            setVideoEvent({
+              videoUrl: body.videoUrl ?? '',
+              currentTime: body.currentTime ?? 0,
+              playing: body.playing ?? false,
+            })
+            return
+          }
 
           // 모더레이션 블라인드: 해당 chatId 메시지를 가림(내용 치환).
           if (type === 'BLIND') {
@@ -87,7 +107,7 @@ export function useChat(streamId: string) {
             chatId: body.chatId,
             type: 'chat',
             role: body.userId && user && body.userId === String(user.id) ? 'me' : 'normal',
-            senderNickname: body.senderNickname ?? '익명',
+            senderNickname: body.senderNickname ?? body.nickname ?? '익명',
             text: body.message ?? '',
           })
         })
@@ -107,6 +127,17 @@ export function useChat(streamId: string) {
     }
   }, [streamId, token, user])
 
+  const sendVideoSync = useCallback(
+    (event: VideoSyncEvent) => {
+      if (!clientRef.current?.connected) return
+      clientRef.current.publish({
+        destination: `/app/streams/${streamId}/video`,
+        body: JSON.stringify(event),
+      })
+    },
+    [streamId],
+  )
+
   const sendMessage = useCallback(
     (text: string) => {
       if (!text.trim() || !user) return
@@ -119,5 +150,5 @@ export function useChat(streamId: string) {
     [user, streamId],
   )
 
-  return { messages, connected, sendMessage }
+  return { messages, connected, sendMessage, videoEvent, sendVideoSync }
 }

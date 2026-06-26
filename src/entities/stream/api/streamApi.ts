@@ -102,3 +102,29 @@ export async function fetchStreamDetail(streamId: string): Promise<StreamDetail>
   const { data } = await httpClient.get<StreamDetailDto>(`/streams/${streamId}`)
   return toStreamDetail(data)
 }
+
+export interface UploadVideoResult {
+  videoId: number
+  videoUrl: string
+}
+
+/** 동영상 업로드 POST /videos/upload — multipart/form-data */
+export async function uploadVideo(
+  file: File,
+  title?: string,
+  onProgress?: (percent: number) => void,
+): Promise<UploadVideoResult> {
+  const form = new FormData()
+  form.append('file', file)
+  if (title) form.append('title', title)
+
+  const { data } = await httpClient.post<UploadVideoResult>('/videos/upload', form, {
+    timeout: 0, // 파일 크기에 따라 시간이 가변적이므로 타임아웃 해제
+    onUploadProgress: (e) => {
+      if (onProgress && e.total) {
+        onProgress(Math.round((e.loaded / e.total) * 100))
+      }
+    },
+  })
+  return data
+}
