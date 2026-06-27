@@ -97,6 +97,12 @@ export async function startStream(streamId: string): Promise<StreamDetail> {
   return toStreamDetail(data)
 }
 
+/** 방송 종료 POST /streams/{id}/end (LIVE -> ENDED). */
+export async function endStream(streamId: string): Promise<StreamDetail> {
+  const { data } = await httpClient.post<StreamDetailDto>(`/streams/${streamId}/end`)
+  return toStreamDetail(data)  // ← startStream 의 매핑 함수와 동일하게
+}
+
 /** 단건 상세 GET /streams/{id}. */
 export async function fetchStreamDetail(streamId: string): Promise<StreamDetail> {
   const { data } = await httpClient.get<StreamDetailDto>(`/streams/${streamId}`)

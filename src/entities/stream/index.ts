@@ -18,6 +18,7 @@ export {
   fetchStreamDetail,
   createStream,
   startStream,
+  endStream,
   uploadVideo,
 } from './api/streamApi'
 export type { UploadVideoResult } from './api/streamApi'
