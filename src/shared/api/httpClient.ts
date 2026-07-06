@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios'
+import { useUserStore } from '@/features/user/model/userStore'
 
 const ACCESS_TOKEN_KEY = 'raio.accessToken'
 const REFRESH_TOKEN_KEY = 'raio.refreshToken'
@@ -67,8 +68,7 @@ httpClient.interceptors.response.use(
       const { data } = await axios.post<{ accessToken: string; refreshToken: string }>(`${BASE_URL}/auth/refresh`, {
         refreshToken,
       })
-      localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken)
-      localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken)
+      useUserStore.getState().updateTokens(data.accessToken, data.refreshToken)
       original.headers.Authorization = `Bearer ${data.accessToken}`
       processQueue(null, data.accessToken)
       return httpClient(original)

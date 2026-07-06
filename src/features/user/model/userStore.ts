@@ -11,6 +11,7 @@ interface UserState {
   token: string | null
   refreshToken: string | null
   setSession: (user: User, accessToken: string, refreshToken: string) => void
+  updateTokens: (accessToken: string, refreshToken: string) => void
   logout: () => void
 }
 
@@ -32,6 +33,11 @@ export const useUserStore = create<UserState>((set) => ({
     localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
     localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
     set({ user, token: accessToken, refreshToken })
+  },
+  updateTokens: (accessToken, refreshToken) => {
+    localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
+    localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+    set({ token: accessToken, refreshToken })
   },
   logout: () => {
     localStorage.removeItem(USER_KEY)
