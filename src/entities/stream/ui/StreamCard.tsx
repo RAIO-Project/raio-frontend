@@ -26,7 +26,13 @@ export function StreamCard({ stream }: StreamCardProps) {
       <div className="space-y-2 p-3">
         <h3 className="line-clamp-2 text-sm font-black leading-snug">{stream.title}</h3>
         <div className="flex items-center justify-between text-xs text-white/45">
-          <span>{stream.streamerId}</span>
+          {/* TODO(streamer): 백엔드가 스트리머 닉네임을 내려주면 여기에 표시 */}
+          <span className="flex items-center gap-1">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-br from-accent to-cyan-600 text-[8px] font-black text-black">
+              R
+            </span>
+            스트리머
+          </span>
           <span>{stream.category ?? '기타'}</span>
         </div>
       </div>

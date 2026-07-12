@@ -95,13 +95,14 @@ export function LiveRoom({ stream }: LiveRoomProps) {
           <>
             <section className="mt-4 rounded-[2rem] border border-border bg-bg-2 p-5">
               <div className="flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-cyan-600 text-lg font-black text-black">
-                  {stream.streamerId[0]}
+                {/* TODO(streamer): 백엔드가 스트리머 닉네임을 내려주면 이니셜/프로필로 교체 */}
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-cyan-600 text-xl text-black">
+                  📺
                 </div>
                 <div className="min-w-0 flex-1">
                   <h1 className="text-xl font-black leading-tight">{stream.title}</h1>
                   <p className="mt-1 text-sm text-white/45">
-                    {stream.streamerId} · {stream.category ?? '기타'}
+                    {stream.category ?? '기타'}
                   </p>
                 </div>
                 <button

@@ -7,6 +7,7 @@ import type { VideoSyncEvent } from '@/features/chat'
 interface VideoStageProps {
   stream: {
     streamerId: string
+    title: string
     viewerCount: number
   }
   isOwner: boolean
@@ -158,7 +159,7 @@ export function VideoStage({ stream, isOwner, videoEvent, onVideoSync }: VideoSt
           {uploadState === 'idle' && (
             <>
               <div className="text-7xl opacity-40">📺</div>
-              <h2 className="mt-3 text-xl font-black">{stream.streamerId} LIVE</h2>
+              <h2 className="mt-3 text-xl font-black">{stream.title}</h2>
               {isOwner ? (
                 <>
                   <p className="mt-1 text-xs text-white/40">동영상을 업로드하면 파일 서버에 저장 후 재생됩니다.</p>
