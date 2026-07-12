@@ -61,7 +61,8 @@ export function LiveRoom({ stream }: LiveRoomProps) {
       <div className="min-w-0 flex-1 overflow-y-auto p-4">
         {/* 영상: 본인은 업로드/제어, 시청자는 동기화 재생 (친구 구현 유지) */}
         <VideoStage
-          stream={{ ...stream, viewerCount: stream.viewerCount ?? 0 }}
+          stream={{ ...stream, viewerCount: chat.viewerCount ?? stream.viewerCount ?? 0 }}
+          //                                 ^^^^^^^^^^^^^^^^ 실시간 값 우선, 없으면 API 값
           isOwner={isOwner}
           videoEvent={chat.videoEvent}
           onVideoSync={chat.sendVideoSync}

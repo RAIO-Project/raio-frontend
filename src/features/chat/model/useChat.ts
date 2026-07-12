@@ -8,7 +8,7 @@ const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 const MAX_MESSAGES = 200 // 라이브 장시간 시청 시 메모리/렌더 부담 방지
 
 interface ServerRelayEvent {
-  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND" | "VIDEO"
+  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND" | "VIDEO" | "VIEWER_COUNT"
   streamId?: string
   chatId?: string
   userId?: string
@@ -22,6 +22,8 @@ interface ServerRelayEvent {
   videoUrl?: string
   currentTime?: number
   playing?: boolean
+  // VIEWER_COUNT
+  viewerCount?: number
 }
 
 export interface VideoSyncEvent {
@@ -34,6 +36,8 @@ export function useChat(streamId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connected, setConnected] = useState(false)
   const [videoEvent, setVideoEvent] = useState<VideoSyncEvent | null>(null)
+  // 실시간 시청자 수. 구독/연결해제 시 서버가 보내준다. null = 아직 못 받음(초기 API 값 사용)
+  const [viewerCount, setViewerCount] = useState<number | null>(null)
   const idRef = useRef(1)
   const clientRef = useRef<Client | null>(null)
   const user = useUserStore((state) => state.user)
@@ -66,6 +70,12 @@ export function useChat(streamId: string) {
               currentTime: body.currentTime ?? 0,
               playing: body.playing ?? false,
             })
+            return
+          }
+
+          // 실시간 시청자 수: 누군가 입장/퇴장할 때마다 갱신된 값이 온다.
+          if (type === 'VIEWER_COUNT') {
+            setViewerCount(body.viewerCount ?? 0)
             return
           }
 
@@ -150,5 +160,5 @@ export function useChat(streamId: string) {
     [user, streamId],
   )
 
-  return { messages, connected, sendMessage, videoEvent, sendVideoSync }
+  return { messages, connected, sendMessage, videoEvent, sendVideoSync, viewerCount }
 }
