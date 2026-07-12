@@ -49,7 +49,6 @@ export function StreamStudioPage() {
     try {
       // 1) 개설(READY) → 2) 시작(LIVE) 까지 한 번에
       const created = await createStream({
-        streamerId: String(user.id),
         title: title.trim(),
         category,
       })

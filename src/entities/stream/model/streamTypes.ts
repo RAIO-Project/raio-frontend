@@ -96,7 +96,6 @@ export interface StreamDetailDto {
 
 // POST /streams 요청 (OpenStreamRequest)
 export interface CreateStreamRequest {
-  streamerId: string
   title: string
   category: StreamCategoryCode
 }

@@ -57,7 +57,7 @@ export async function fetchStreamsByViewer(params: {
   return data.content.map((item) => toStream(item.stream, item.currentViewerCount))
 }
 
-// ----- 방송 생성/시작/상세 (라이프사이클) -----
+// ----- 방송 생성/시작/종료/상세 (라이프사이클) -----
 import {
   type CreateStreamRequest,
   type StreamDetail,
@@ -75,15 +75,16 @@ function toStreamDetail(dto: StreamDetailDto): StreamDetail {
   }
 }
 
-/** 방송 개설 POST /streams (READY 생성). category 는 한글 라벨로 받아 enum 코드로 변환. */
+/**
+ * 방송 개설 POST /streams (READY 생성). category 는 한글 라벨로 받아 enum 코드로 변환.
+ * 개설자(streamerId)는 서버가 JWT 에서 식별하므로 보내지 않는다.
+ */
 export async function createStream(params: {
-  streamerId: string
   title: string
   category: Exclude<StreamCategoryLabel, '전체'>
 }): Promise<StreamDetail> {
   const code = toCategoryCode(params.category)
   const payload: CreateStreamRequest = {
-    streamerId: params.streamerId,
     title: params.title,
     category: code!, // '전체' 제외 라벨이므로 code 항상 존재
   }
@@ -91,16 +92,16 @@ export async function createStream(params: {
   return toStreamDetail(data)
 }
 
-/** 방송 시작 POST /streams/{id}/start (READY -> LIVE). */
+/** 방송 시작 POST /streams/{id}/start (READY -> LIVE). 방송 주인만 가능. */
 export async function startStream(streamId: string): Promise<StreamDetail> {
   const { data } = await httpClient.post<StreamDetailDto>(`/streams/${streamId}/start`, {})
   return toStreamDetail(data)
 }
 
-/** 방송 종료 POST /streams/{id}/end (LIVE -> ENDED). */
+/** 방송 종료 POST /streams/{id}/end (LIVE -> ENDED). 방송 주인만 가능. */
 export async function endStream(streamId: string): Promise<StreamDetail> {
   const { data } = await httpClient.post<StreamDetailDto>(`/streams/${streamId}/end`)
-  return toStreamDetail(data)  // ← startStream 의 매핑 함수와 동일하게
+  return toStreamDetail(data)
 }
 
 /** 단건 상세 GET /streams/{id}. */

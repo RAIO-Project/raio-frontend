@@ -11,7 +11,7 @@ const DONATION_AMOUNTS = [100, 500, 1000, 5000];
 
 interface DonationBoxProps {
   streamId: string;
-  streamerId?: string; // 후원 수신자(receiverId)
+  streamerId: string; // 후원 수신자(receiverId)
 }
 
 export function DonationBox({ streamId, streamerId }: DonationBoxProps) {
@@ -38,7 +38,6 @@ export function DonationBox({ streamId, streamerId }: DonationBoxProps) {
       // 후원 발송(REST). 후원 메시지는 백엔드 브로드캐스트(STOMP)로 채팅에 표시됨 → 낙관적 push 안 함.
       await createDonation({
         streamId,
-        senderId: String(user.id), // TODO(auth): 인증 붙으면 제거(토큰에서)
         receiverId: streamerId,
         amount,
         message: message.trim() || undefined,
