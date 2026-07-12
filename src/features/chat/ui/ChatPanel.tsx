@@ -6,6 +6,7 @@ import { useUserStore } from '@/features/user'
 import { formatPoint } from '@/shared'
 
 const nickTone: Record<ChatRole, string> = {
+  streamer: 'text-accent',
   admin: 'text-accent',
   donor: 'text-accent-2',
   me: 'text-accent-green',
@@ -84,8 +85,20 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
               </p>
             )
           }
+
+          const isStreamer = role === 'streamer'
           return (
-            <p key={msg.id} className="px-3 py-1 text-xs leading-relaxed hover:bg-white/[0.03]">
+            <p
+              key={msg.id}
+              className={`px-3 py-1 text-xs leading-relaxed hover:bg-white/[0.03] ${
+                isStreamer ? 'border-l-2 border-accent bg-accent/[0.06]' : ''
+              }`}
+            >
+              {isStreamer && (
+                <span className="mr-1 inline-flex items-center rounded bg-accent px-1 py-px align-[1px] text-[9px] font-black leading-none tracking-tight text-black">
+                  스트리머
+                </span>
+              )}
               <b className={`mr-1.5 ${nickTone[role]}`}>{msg.senderNickname}</b>
               <span className="break-words text-white/80">{msg.text}</span>
             </p>

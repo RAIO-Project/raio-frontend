@@ -1,5 +1,5 @@
 export type ChatMessageType = 'notice' | 'donation' | 'chat'
-export type ChatRole = 'admin' | 'donor' | 'me' | 'normal'
+export type ChatRole = 'streamer' | 'admin' | 'donor' | 'me' | 'normal'
 
 export interface ChatMessage {
   id: number

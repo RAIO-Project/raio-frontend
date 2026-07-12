@@ -27,7 +27,7 @@ export function LiveRoom({ stream }: LiveRoomProps) {
   const [ending, setEnding] = useState(false)
   const [ended, setEnded] = useState(false)
   const user = useUserStore((state) => state.user)
-  const chat = useChat(stream.id)
+  const chat = useChat(stream.id, stream.streamerId)
   const isOwner = !!user && String(user.id) === stream.streamerId
 
   const handleEnd = async () => {

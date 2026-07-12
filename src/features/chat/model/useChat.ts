@@ -32,7 +32,10 @@ export interface VideoSyncEvent {
   playing: boolean
 }
 
-export function useChat(streamId: string) {
+/**
+ * @param streamerId 방송 주인. 채팅에서 스트리머를 구분해 표시하는 데 쓴다.
+ */
+export function useChat(streamId: string, streamerId?: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [connected, setConnected] = useState(false)
   const [videoEvent, setVideoEvent] = useState<VideoSyncEvent | null>(null)
@@ -112,11 +115,15 @@ export function useChat(streamId: string) {
           }
 
           // CHAT — chatId 보관(BLIND 매칭용)
+          // 방송 주인이면 스트리머로 표시. 내가 스트리머여도 스트리머 표시가 우선이다.
+          const isStreamer = !!streamerId && !!body.userId && body.userId === streamerId
+          const isMe = !!body.userId && !!user && body.userId === String(user.id)
+
           append({
             id: idRef.current++,
             chatId: body.chatId,
             type: 'chat',
-            role: body.userId && user && body.userId === String(user.id) ? 'me' : 'normal',
+            role: isStreamer ? 'streamer' : isMe ? 'me' : 'normal',
             senderNickname: body.senderNickname ?? body.nickname ?? '익명',
             text: body.message ?? '',
           })
@@ -135,7 +142,7 @@ export function useChat(streamId: string) {
       clientRef.current = null
       setConnected(false)
     }
-  }, [streamId, token, user])
+  }, [streamId, streamerId, token, user])
 
   const sendVideoSync = useCallback(
     (event: VideoSyncEvent) => {
