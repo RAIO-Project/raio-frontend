@@ -4,7 +4,6 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { fetchStreamDetail, type StreamDetail } from '@/entities/stream'
 import { ToastHost } from '@/shared'
 import { AppHeader } from '@/widgets/layout'
-import { AuthGateModal, PointChargeModal } from '@/widgets/payment/point-charge'
 import { LiveRoom } from '@/widgets/stream/live-room'
 
 export function StreamDetailPage() {
@@ -54,8 +53,6 @@ export function StreamDetailPage() {
       )}
       {stream && !loading && !error && <LiveRoom stream={stream} />}
 
-      <AuthGateModal />
-      <PointChargeModal />
       <ToastHost />
     </div>
   )

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 
 import { createDonation } from "@/entities/donation";
 import { usePaymentStore } from "@/entities/payment";
@@ -20,6 +19,7 @@ export function DonationBox({ streamId, streamerId }: DonationBoxProps) {
   const balance = usePaymentStore((state) => state.balance);
   const deductBalance = usePaymentStore((state) => state.deductBalance);
   const openCharge = usePointStore((state) => state.openCharge);
+  const openAuth = usePointStore((state) => state.openAuth);
   const [amount, setAmount] = useState(500);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -95,9 +95,9 @@ export function DonationBox({ streamId, streamerId }: DonationBoxProps) {
       ) : (
         <div className="rounded-2xl border border-border bg-bg-3 p-5 text-center text-xs text-white/40">
           후원하려면{" "}
-          <Link className="font-black text-accent-2" to="/login">
+          <button onClick={() => openAuth()} className="font-black text-accent-2 hover:underline">
             로그인
-          </Link>
+          </button>
           하세요.
         </div>
       )}

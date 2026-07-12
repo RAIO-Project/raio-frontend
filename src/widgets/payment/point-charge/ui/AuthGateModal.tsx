@@ -7,6 +7,7 @@ type AuthMode = 'login' | 'register'
 
 export function AuthGateModal() {
   const isAuthOpen = usePointStore((state) => state.isAuthOpen)
+  const authPurpose = usePointStore((state) => state.authPurpose)
   const closeAuth = usePointStore((state) => state.closeAuth)
   const openCharge = usePointStore((state) => state.openCharge)
   const [mode, setMode] = useState<AuthMode>('login')
@@ -15,7 +16,9 @@ export function AuthGateModal() {
 
   const handleSuccess = () => {
     closeAuth()
-    openCharge()
+    // 포인트를 충전하려다 로그인한 경우에만 충전 모달로 이어준다.
+    // 채팅·후원처럼 현재 화면에서 로그인만 필요한 경우엔 그대로 닫는다.
+    if (authPurpose === 'charge') openCharge()
   }
 
   return (

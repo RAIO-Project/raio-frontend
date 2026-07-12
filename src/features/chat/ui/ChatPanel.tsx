@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import type { ChatMessage, ChatRole } from '@/entities/chat'
+import { usePointStore } from '@/features/payment/charge-point'
 import { useUserStore } from '@/features/user'
 import { formatPoint } from '@/shared'
 
@@ -25,6 +25,7 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const stickToBottom = useRef(true)
   const token = useUserStore((state) => state.token)
+  const openAuth = usePointStore((state) => state.openAuth)
 
   // 사용자가 맨 아래 근처에 있을 때만 자동 스크롤 (위로 올려 과거글 읽는 중이면 안 끌어내림)
   const handleScroll = () => {
@@ -130,7 +131,11 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
           </div>
         ) : (
           <div className="rounded-2xl border border-border bg-bg-3 p-4 text-center text-xs text-white/40">
-            채팅하려면 <Link className="font-black text-accent" to="/login">로그인</Link>하세요.
+            채팅하려면{' '}
+            <button onClick={() => openAuth()} className="font-black text-accent hover:underline">
+              로그인
+            </button>
+            하세요.
           </div>
         )}
       </div>

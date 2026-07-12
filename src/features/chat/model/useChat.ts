@@ -46,8 +46,15 @@ export function useChat(streamId: string, streamerId?: string) {
   const user = useUserStore((state) => state.user)
   const token = useUserStore((state) => state.token)
 
+  // 객체(user)를 의존성에 두면 참조가 바뀔 때마다 재연결되므로 원시값으로 고정
+  const userId = user?.id != null ? String(user.id) : null
+
   useEffect(() => {
     if (!streamId) return undefined
+
+    // 로그인/로그아웃으로 재연결될 때, 정리된 옛 클라이언트의 콜백이
+    // 새 연결의 상태를 덮어쓰지 않도록 막는다. (deactivate 는 비동기라 콜백이 늦게 온다)
+    let cancelled = false
 
     const append = (msg: ChatMessage) =>
       setMessages((prev) => {
@@ -61,8 +68,10 @@ export function useChat(streamId: string, streamerId?: string) {
       connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
       reconnectDelay: 5000,
       onConnect: () => {
+        if (cancelled) return
         setConnected(true)
         client.subscribe(`/topic/streams/${streamId}`, (frame) => {
+          if (cancelled) return
           const body = JSON.parse(frame.body) as ServerRelayEvent
           // VideoMessage는 type을 record component로 가지지 않아 JSON에 누락될 수 있음 → videoUrl로 보완 판별
           const type = body.type ?? (body.videoUrl ? 'VIDEO' : 'CHAT')
@@ -117,7 +126,7 @@ export function useChat(streamId: string, streamerId?: string) {
           // CHAT — chatId 보관(BLIND 매칭용)
           // 방송 주인이면 스트리머로 표시. 내가 스트리머여도 스트리머 표시가 우선이다.
           const isStreamer = !!streamerId && !!body.userId && body.userId === streamerId
-          const isMe = !!body.userId && !!user && body.userId === String(user.id)
+          const isMe = !!body.userId && !!userId && body.userId === userId
 
           append({
             id: idRef.current++,
@@ -129,20 +138,27 @@ export function useChat(streamId: string, streamerId?: string) {
           })
         })
       },
-      onDisconnect: () => setConnected(false),
-      onStompError: () => setConnected(false),
-      onWebSocketClose: () => setConnected(false),
+      onDisconnect: () => {
+        if (!cancelled) setConnected(false)
+      },
+      onStompError: () => {
+        if (!cancelled) setConnected(false)
+      },
+      onWebSocketClose: () => {
+        if (!cancelled) setConnected(false)
+      },
     })
 
     client.activate()
     clientRef.current = client
 
     return () => {
+      cancelled = true // 이후 이 클라이언트의 콜백은 모두 무시한다
       void client.deactivate()
       clientRef.current = null
       setConnected(false)
     }
-  }, [streamId, streamerId, token, user])
+  }, [streamId, streamerId, token, userId])
 
   const sendVideoSync = useCallback(
     (event: VideoSyncEvent) => {
@@ -157,14 +173,14 @@ export function useChat(streamId: string, streamerId?: string) {
 
   const sendMessage = useCallback(
     (text: string) => {
-      if (!text.trim() || !user) return
+      if (!text.trim() || !userId) return
       if (!clientRef.current?.connected) return
       clientRef.current.publish({
         destination: `/app/streams/${streamId}/chat`,
         body: JSON.stringify({ message: text.trim() }),
       })
     },
-    [user, streamId],
+    [userId, streamId],
   )
 
   return { messages, connected, sendMessage, videoEvent, sendVideoSync, viewerCount }
