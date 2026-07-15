@@ -10,7 +10,7 @@ export interface CreateDonationRequest {
   receiverId: string
   amount: number
   message?: string
-  senderNickname?: string // TODO(auth): 인증 붙으면 제거(토큰에서)
+  // senderNickname 은 보내지 않는다 — 후원자 표시명은 백엔드가 토큰에서 채운다
 }
 
 export interface CreateDonationResponse {

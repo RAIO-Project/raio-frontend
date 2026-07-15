@@ -41,7 +41,7 @@ export function DonationBox({ streamId, streamerId }: DonationBoxProps) {
         receiverId: streamerId,
         amount,
         message: message.trim() || undefined,
-        senderNickname: user.nickname || `유저${user.id}`, // TODO(auth): 제거
+        // senderNickname 안 보냄 — 백엔드가 토큰(JWT)에서 후원자 표시명까지 식별한다
       });
       // TODO: 백엔드 지갑(포인트) 연동되면 로컬 차감 제거하고 잔액 재조회로 동기화
       deductBalance(amount);
