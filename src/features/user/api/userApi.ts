@@ -10,12 +10,12 @@ function buildUserFromToken(
   const payload = JSON.parse(atob(raw)) as {
     sub: string
     roles?: string[]
-    nickname?: string
+    nickName?: string
   }
   return {
     id: String(payload.sub),
     email,
-    nickname: overrides?.nickname ?? payload.nickname ?? '',
+    nickname: overrides?.nickname ?? payload.nickName ?? '',
     phoneNumber: '',
     role: (payload.roles?.[0] ?? 'USER') as UserRole,
     status: 'ACTIVE',
