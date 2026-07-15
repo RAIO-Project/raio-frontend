@@ -8,7 +8,7 @@ const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
 const MAX_MESSAGES = 200 // 라이브 장시간 시청 시 메모리/렌더 부담 방지
 
 interface ServerRelayEvent {
-  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND" | "VIDEO" | "VIEWER_COUNT"
+  type?: string // "CHAT" | "JOIN" | "LEAVE" | "DONATION" | "BLIND" | "VIDEO" | "VIEWER_COUNT" | "STREAM_ENDED"
   streamId?: string
   chatId?: string
   userId?: string
@@ -26,6 +26,14 @@ interface ServerRelayEvent {
   viewerCount?: number
 }
 
+/** 영상 위 오버레이로 띄울 후원. 채팅 기록과 별개로 전달된다. */
+export interface DonationAlertEvent {
+  id: number
+  senderNickname: string
+  amount: number
+  message: string
+}
+
 export interface VideoSyncEvent {
   videoUrl: string
   currentTime: number
@@ -41,6 +49,10 @@ export function useChat(streamId: string, streamerId?: string) {
   const [videoEvent, setVideoEvent] = useState<VideoSyncEvent | null>(null)
   // 실시간 시청자 수. 구독/연결해제 시 서버가 보내준다. null = 아직 못 받음(초기 API 값 사용)
   const [viewerCount, setViewerCount] = useState<number | null>(null)
+  // 방송 종료. 스트리머가 종료하면 시청 중인 사용자에게 전달된다.
+  const [streamEnded, setStreamEnded] = useState(false)
+  // 최신 후원. 오버레이가 큐에 쌓아 순서대로 띄운다.
+  const [donationAlert, setDonationAlert] = useState<DonationAlertEvent | null>(null)
   const idRef = useRef(1)
   const clientRef = useRef<Client | null>(null)
   const user = useUserStore((state) => state.user)
@@ -91,6 +103,12 @@ export function useChat(streamId: string, streamerId?: string) {
             return
           }
 
+          // 방송 종료: 시청 중이던 사용자에게 종료 화면을 띄운다.
+          if (type === 'STREAM_ENDED') {
+            setStreamEnded(true)
+            return
+          }
+
           // 모더레이션 블라인드: 해당 chatId 메시지를 가림(내용 치환).
           if (type === 'BLIND') {
             setMessages((prev) =>
@@ -113,13 +131,14 @@ export function useChat(streamId: string, streamerId?: string) {
           }
 
           if (type === 'DONATION') {
-            append({
-              id: idRef.current++,
-              type: 'donation',
-              senderNickname: body.senderNickname ?? body.nickname ?? '익명',
-              amount: body.amount ?? 0,
-              text: body.message ?? '',
-            })
+            const id = idRef.current++
+            const senderNickname = body.senderNickname ?? body.nickname ?? '익명'
+            const amount = body.amount ?? 0
+            const text = body.message ?? ''
+
+            append({ id, type: 'donation', senderNickname, amount, text })
+            // 채팅 기록과 별개로 영상 위 오버레이에도 띄운다
+            setDonationAlert({ id, senderNickname, amount, message: text })
             return
           }
 
@@ -183,5 +202,14 @@ export function useChat(streamId: string, streamerId?: string) {
     [userId, streamId],
   )
 
-  return { messages, connected, sendMessage, videoEvent, sendVideoSync, viewerCount }
+  return {
+    messages,
+    connected,
+    sendMessage,
+    videoEvent,
+    sendVideoSync,
+    viewerCount,
+    streamEnded,
+    donationAlert,
+  }
 }

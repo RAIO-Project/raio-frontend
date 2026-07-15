@@ -2,7 +2,8 @@ import type { ChangeEvent } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { formatCompactNumber } from '@/shared'
 import { uploadVideo } from '@/entities/stream'
-import type { VideoSyncEvent } from '@/features/chat'
+import type { DonationAlertEvent, VideoSyncEvent } from '@/features/chat'
+import { DonationAlert } from '@/features/donation'
 
 interface VideoStageProps {
   stream: {
@@ -13,11 +14,13 @@ interface VideoStageProps {
   isOwner: boolean
   videoEvent?: VideoSyncEvent | null
   onVideoSync?: (event: VideoSyncEvent) => void
+  /** 후원 알림 (영상 위 오버레이) */
+  donationAlert?: DonationAlertEvent | null
 }
 
 type UploadState = 'idle' | 'uploading' | 'done' | 'error'
 
-export function VideoStage({ stream, isOwner, videoEvent, onVideoSync }: VideoStageProps) {
+export function VideoStage({ stream, isOwner, videoEvent, onVideoSync, donationAlert }: VideoStageProps) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const videoRef = useRef<HTMLVideoElement | null>(null)
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -154,6 +157,9 @@ export function VideoStage({ stream, isOwner, videoEvent, onVideoSync }: VideoSt
 
   return (
     <section className="relative aspect-video overflow-hidden rounded-[2rem] border border-border bg-black">
+      {/* 후원 알림: 영상 위에 떠서 몇 초간 표시된다 */}
+      <DonationAlert alert={donationAlert} />
+
       {!isDone && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-bg-3 to-bg-5 text-center">
           {uploadState === 'idle' && (

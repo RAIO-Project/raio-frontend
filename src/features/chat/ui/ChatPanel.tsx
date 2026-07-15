@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import type { ChatMessage, ChatRole } from '@/entities/chat'
+import { donationGradeOf, type DonationGradeLevel } from '@/entities/donation'
 import { usePointStore } from '@/features/payment/charge-point'
 import { useUserStore } from '@/features/user'
 import { formatPoint } from '@/shared'
@@ -11,6 +12,13 @@ const nickTone: Record<ChatRole, string> = {
   donor: 'text-accent-2',
   me: 'text-accent-green',
   normal: 'text-[#9ca3c8]',
+}
+
+/** 후원 채팅 줄의 등급별 색. 이모지·구간 기준은 entities/donation 을 따른다(오버레이와 동일). */
+const donationChatTone: Record<DonationGradeLevel, string> = {
+  crown: 'border-accent-yellow/25 bg-accent-yellow/10 text-accent-yellow',
+  diamond: 'border-accent/25 bg-accent/10 text-accent',
+  heart: 'border-accent-2/25 bg-accent-2/10 text-accent-2',
 }
 
 interface ChatPanelProps {
@@ -67,10 +75,11 @@ export function ChatPanel({ messages, connected, onSend }: ChatPanelProps) {
           }
 
           if (msg.type === 'donation') {
+            const grade = donationGradeOf(msg.amount ?? 0)
             return (
-              <div key={msg.id} className="mx-3 my-2 rounded-xl border border-accent-2/25 bg-accent-2/10 px-3 py-2">
-                <p className="text-[11px] font-black text-accent-2">
-                  💝 {msg.senderNickname}님 {formatPoint(msg.amount ?? 0)} 후원
+              <div key={msg.id} className={`mx-3 my-2 rounded-xl border px-3 py-2 ${donationChatTone[grade.level]}`}>
+                <p className="text-[11px] font-black">
+                  {grade.emoji} {msg.senderNickname}님 {formatPoint(msg.amount ?? 0)} 후원
                 </p>
                 {msg.text && <p className="mt-1 text-[11px] text-white/60">“{msg.text}”</p>}
               </div>

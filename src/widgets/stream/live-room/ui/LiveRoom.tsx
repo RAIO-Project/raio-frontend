@@ -45,7 +45,8 @@ export function LiveRoom({ stream }: LiveRoomProps) {
     }
   }
 
-  if (ended) {
+  // 스트리머가 종료했거나(본인), 시청 중 방송이 종료되면(시청자) 종료 화면
+  if (ended || chat.streamEnded) {
     return (
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 text-center">
         <p className="text-lg font-black text-white">방송이 종료되었습니다.</p>
@@ -66,6 +67,7 @@ export function LiveRoom({ stream }: LiveRoomProps) {
           isOwner={isOwner}
           videoEvent={chat.videoEvent}
           onVideoSync={chat.sendVideoSync}
+          donationAlert={chat.donationAlert}
         />
 
         {isOwner ? (
